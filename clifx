@@ -563,19 +563,29 @@ tui_run() {
             ;;
 
         animations)
+            # Build display-order list (mini first, then full)
+            local -a _anim_order=()
+            for _ai in "${!ANIM_NAMES[@]}"; do
+                [[ "${ANIM_NAMES[$_ai]}" == mini-* ]] && _anim_order+=("$_ai")
+            done
+            for _ai in "${!ANIM_NAMES[@]}"; do
+                [[ "${ANIM_NAMES[$_ai]}" != mini-* ]] && _anim_order+=("$_ai")
+            done
+
             menu_animations
             read -r choice
             case "$choice" in
                 [0-9]|[0-9][0-9])
-                    local idx=$((choice - 1))
-                    if [[ "$idx" -ge 0 ]] && [[ "$idx" -lt "${#ANIM_NAMES[@]}" ]]; then
+                    local pick=$((choice - 1))
+                    if [[ "$pick" -ge 0 ]] && [[ "$pick" -lt "${#_anim_order[@]}" ]]; then
+                        local real_idx="${_anim_order[$pick]}"
                         printf "  ${UI_DIM}fps (default 12):${RESET} "
                         read -r fps_input
                         [[ -z "$fps_input" ]] && fps_input=12
                         printf "  ${UI_DIM}loops (0=infinite, default 1):${RESET} "
                         read -r loops_input
                         [[ -z "$loops_input" ]] && loops_input=1
-                        run_animation "${ANIM_NAMES[$idx]}" "$fps_input" "$loops_input"
+                        run_animation "${ANIM_NAMES[$real_idx]}" "$fps_input" "$loops_input"
                         wait_key
                     fi
                     ;;
