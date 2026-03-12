@@ -45,6 +45,8 @@ Set `CLIFX_SPEED_MULT` env var (percentage: 50 = 2x faster, 200 = 2x slower). Al
 `lib/core.sh` must be sourced first — it sets up `CLIFX_LIB_DIR`, terminal dimensions, `sleep_ms()`, and the `source_lib`/`source_theme` loader functions. All other lib files use include guards (`_CLIFX_*_LOADED`).
 
 ```
+clifx                ← top-level CLI: interactive TUI (no args) or direct commands
+│
 lib/core.sh          ← source this first (bootstrap, constants, sleep_ms, source_lib)
 ├── lib/style.sh     ← ANSI codes, color constructors (fg, bg, fg_rgb), capability detection
 ├── lib/terminal.sh  ← cursor movement, screen clearing, centering math
@@ -54,7 +56,7 @@ lib/core.sh          ← source this first (bootstrap, constants, sleep_ms, sour
 ├── lib/box.sh       ← draw_box, draw_box_text, draw_header, draw_panel (4 border styles)
 ├── lib/divider.sh   ← divider, divider_text, blank_lines (6 line styles)
 ├── lib/corruption.sh← corrupted install sequences, glitch_wash, RTL rendering, script_freeze
-├── lib/ascii.sh     ← render_art, render_art_animated, assemble_fragments, play_frames
+├── lib/ascii.sh     ← render_art, render_art_animated, assemble_fragments, play_frames (+viewport crop)
 │
 theme/default.sh     ← default color palette + frame characters (overridable via CLIFX_COLOR_*)
 │
@@ -68,7 +70,7 @@ scripts/manifest.sh          ← effect dispatcher (sources all manifest_*.sh mo
 │
 scripts/voice.sh     ← text voice renderer (whisper, speak, shout, corrupt, fragment, clear)
 scripts/play.sh      ← standalone frame animation player (wraps play_frames with trap/cleanup)
-scripts/tester.sh    ← interactive TUI for testing all effects with speed/color overrides
+scripts/tester.sh    ← legacy interactive tester (superseded by ./clifx)
 ```
 
 ### How to Source the Library
