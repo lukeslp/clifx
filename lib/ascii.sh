@@ -97,6 +97,63 @@ assemble_fragments() {
     render_art "$combined" "$color"
 }
 
+# --- Crop a frame to fit terminal viewport ---
+# Centers content and clips to TERM_ROWS x TERM_COLS
+# Usage: _crop_frame "frame_text"
+# Output: cropped text via stdout
+_crop_frame() {
+    local frame="$1"
+    local -a lines=()
+    while IFS= read -r line; do
+        lines+=("$line")
+    done <<< "$frame"
+
+    local frame_h=${#lines[@]}
+    local max_w=0
+    for line in "${lines[@]}"; do
+        local len=${#line}
+        (( len > max_w )) && max_w=$len
+    done
+
+    # Compute vertical crop range (center the frame in viewport)
+    local avail_rows=$((TERM_ROWS - 1))  # leave 1 row for safety
+    local y_start=0 y_count=$frame_h
+    if (( frame_h > avail_rows )); then
+        y_start=$(( (frame_h - avail_rows) / 2 ))
+        y_count=$avail_rows
+    fi
+
+    # Compute horizontal crop offset (center if wider than terminal)
+    local x_start=0
+    if (( max_w > TERM_COLS )); then
+        x_start=$(( (max_w - TERM_COLS) / 2 ))
+    fi
+
+    # Compute left padding to center narrow frames
+    local pad=0
+    if (( max_w < TERM_COLS )); then
+        pad=$(( (TERM_COLS - max_w) / 2 ))
+    fi
+
+    local output=""
+    for (( i=y_start; i < y_start + y_count && i < frame_h; i++ )); do
+        local line="${lines[$i]}"
+        if (( x_start > 0 )); then
+            line="${line:$x_start:$TERM_COLS}"
+        elif (( ${#line} > TERM_COLS )); then
+            line="${line:0:$TERM_COLS}"
+        fi
+        if (( pad > 0 )); then
+            [[ -n "$output" ]] && output+=$'\n'
+            output+="$(printf '%*s%s' "$pad" '' "$line")"
+        else
+            [[ -n "$output" ]] && output+=$'\n'
+            output+="$line"
+        fi
+    done
+    printf '%s' "$output"
+}
+
 # --- Play frame animation ---
 # Play a text file containing frames delimited by "--- Frame N ---"
 # Usage: play_frames <file> [fps] [loops] [color]
@@ -148,6 +205,9 @@ play_frames() {
         return 1
     fi
 
+    # Refresh terminal size for viewport cropping
+    get_terminal_size 2>/dev/null || true
+
     hide_cursor
 
     local loop_count=0
@@ -155,7 +215,7 @@ play_frames() {
         for ((f=0; f<num_frames; f++)); do
             printf '\033[2J\033[H'  # clear screen + home
             [[ -n "$color" ]] && printf '%b' "$color"
-            printf '%s' "${frames[$f]}"
+            _crop_frame "${frames[$f]}"
             [[ -n "$color" ]] && printf '%b' "$RESET"
             sleep_ms "$delay_ms"
         done
