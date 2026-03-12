@@ -1,6 +1,6 @@
 # clifx
 
-Terminal visual effects in pure Bash. Glitch washes, matrix rain, screen corruption, typing animations, progress bars, box drawing — 28 effects, 6 text voices, and a frame animation player with GIF-to-terminal converter. All built on ANSI escape codes.
+Terminal visual effects in pure Bash. A variety of nonsense including glitch washes, matrix rain, screen corruption, typing animations, progress bars, all kinds of text, some crappy boxes I can't get to work, and whatever else came into my tiny mind. Oh, and a player for frame by frame animations, ascii animations, and a gif to terminal converter that works like absolute garbage. All built on ANSI escape codes! 
 
 No dependencies. No build step. Just `source` and go.
 
