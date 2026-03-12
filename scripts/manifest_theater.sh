@@ -221,7 +221,7 @@ effect_process_tree() {
                     corrupted+="${proc:$c:1}"
                 fi
             done
-            printf "${THEME_ACCENT}%s${RESET}\n" "$corrupted"
+            printf "${THEME_HOT}%s${RESET}\n" "$corrupted"
         else
             # Normal processes
             local proc="${normal_procs[$((RANDOM % ${#normal_procs[@]}))]}"

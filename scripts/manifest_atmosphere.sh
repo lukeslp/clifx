@@ -47,7 +47,7 @@ effect_vignette() {
             done
 
             # Render with color based on proximity
-            printf "${THEME_DIM}%s${RESET}" "$line"
+            printf "${THEME_ACCENT}%s${RESET}" "$line"
         done
 
         sleep_ms 200
