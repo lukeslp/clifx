@@ -57,12 +57,12 @@ voice_corrupt() {
     local text="$1"
     local glitch_chars=('░' '▒' '▓' '█' '?' '#' '@' '&' '%')
     echo ""
-    printf "  ${THEME_FG}"
+    printf "${THEME_HOT}"
     for ((i=0; i<${#text}; i++)); do
         local char="${text:$i:1}"
         if [ $((RANDOM % 6)) -eq 0 ]; then
             local gc="${glitch_chars[$((RANDOM % ${#glitch_chars[@]}))]}"
-            printf "${THEME_ACCENT}%s${THEME_FG}" "$gc"
+            printf "${THEME_WARN}%s${THEME_HOT}" "$gc"
             sleep_ms 80
             printf '\b'
             printf "%s" "$char"
@@ -95,7 +95,8 @@ voice_fragment() {
     echo ""
     for frag in "${fragments[@]}"; do
         local indent_n=$((RANDOM % 15 + 3))
-        printf "%*s${THEME_FG}%s${RESET}\n" "$indent_n" "" "$frag"
+        local -a frag_colors=("$THEME_COOL" "$THEME_ELECTRIC" "$THEME_ACCENT" "$THEME_STEEL")
+        printf "%*s${frag_colors[$((RANDOM % ${#frag_colors[@]}))]}%s${RESET}\n" "$indent_n" "" "$frag"
         sleep_ms $((200 + RANDOM % 500))
     done
     echo ""
