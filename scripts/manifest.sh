@@ -145,13 +145,13 @@ effect_styled_frame() {
     # Fill remaining space
     local remaining=$((width - text_len - 3))
     [ $remaining -gt 0 ] && printf "%*s" "$remaining" ""
-    printf "${THEME_FG}▌${RESET}"
+    printf "${THEME_ELECTRIC}▌${RESET}"
 
     # Bottom border
     local bottom_row=$((text_row + 1))
     move_cursor "$bottom_row" "$padding"
     for ((i=0; i<width; i++)); do
-        printf "${THEME_FG}%s${RESET}" "$(random_frame_char)"
+        printf "${THEME_ELECTRIC}%s${RESET}" "$(random_frame_char)"
         sleep_ms 8
     done
 
@@ -202,7 +202,7 @@ effect_corruption() {
         line_num=$((line_num + 1))
         if [ $((RANDOM % 5)) -eq 0 ]; then
             local glitch_msg="${glitch_lines[$((RANDOM % ${#glitch_lines[@]}))]}"
-            printf "${THEME_FG}${DIM}%4d │ %s${RESET}\n" "$line_num" "$glitch_msg"
+            printf "${THEME_HOT}${DIM}%4d │ %s${RESET}\n" "$line_num" "$glitch_msg"
             sleep_ms 200
             sleep_ms 400
             printf "\033[1A\033[2K"
@@ -226,11 +226,11 @@ effect_heartbeat() {
 
     for ((i=0; i<count; i++)); do
         move_cursor "$center_row" "$center_col"
-        printf "${THEME_GLOW}${BOLD} %s ${RESET}" "$symbol"
+        printf "${THEME_WARN}${BOLD} %s ${RESET}" "$symbol"
         sleep_ms 200
 
         move_cursor "$center_row" "$center_col"
-        printf "${THEME_DIM} %s ${RESET}" "$symbol"
+        printf "${THEME_HOT_DIM} %s ${RESET}" "$symbol"
         sleep_ms 600
     done
 
@@ -244,11 +244,13 @@ effect_heartbeat() {
 effect_transition() {
     hide_cursor
 
+    local -a trans_colors=("$THEME_FG" "$THEME_COOL" "$THEME_ELECTRIC" "$THEME_ACCENT")
     for ((row=1; row<=ROWS; row++)); do
         move_cursor "$row" 1
+        local rc="${trans_colors[$((row % ${#trans_colors[@]}))]}"
         for ((col=0; col<COLS; col++)); do
             if [ $((RANDOM % 3)) -eq 0 ]; then
-                printf "${THEME_FG}%s${RESET}" "$(random_frame_char)"
+                printf "${rc}%s${RESET}" "$(random_frame_char)"
             else
                 printf "${THEME_DIM}░${RESET}"
             fi
@@ -270,7 +272,7 @@ effect_color_wave() {
     hide_cursor
     save_cursor
 
-    local colors=(22 28 34 40 46 83 83 46 40 34 28 22)
+    local colors=(196 208 214 226 118 48 44 33 63 93 128 196)
 
     for ((w=0; w<waves; w++)); do
         if [ "$direction" = "down" ] || [ "$direction" = "up" ]; then
@@ -337,25 +339,25 @@ effect_fake_install() {
     )
 
     echo ""
-    printf "  ${DIM}installing dependencies...${RESET}\n"
+    printf "  ${THEME_STEEL_DIM}installing dependencies...${RESET}\n"
     echo ""
 
     for ((i=0; i<${#packages[@]}; i++)); do
         local pkg="${packages[$i]}"
-        printf "  ${DIM}  + %s${RESET}" "$pkg"
+        printf "  ${THEME_COOL_DIM}  + %s${RESET}" "$pkg"
 
         local dots=$((RANDOM % 4 + 2))
         for ((d=0; d<dots; d++)); do
             sleep_ms $((100 + RANDOM % 400))
-            printf "."
+            printf "${THEME_STEEL_DIM}.${RESET}"
         done
 
         if [ "$i" -eq $((${#packages[@]} - 1)) ]; then
             sleep 2
-            printf " ${THEME_GLOW}${BOLD}installed.${RESET}\n"
+            printf " ${THEME_COOL}${BOLD}installed.${RESET}\n"
             sleep 1
         else
-            printf " ${DIM}✓${RESET}\n"
+            printf " ${THEME_STEEL_DIM}✓${RESET}\n"
         fi
     done
     echo ""
