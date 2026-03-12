@@ -228,10 +228,13 @@ record_one() {
     local tmp_script
     tmp_script=$(mktemp /tmp/clifx-demo-XXXXXX.sh)
 
-    # We need to export the helper and the demo function
+    # We need to export paths, the helper, and the demo function
     cat > "$tmp_script" << WRAPPER
 #!/usr/bin/env bash
 export TERM_COLS=$COLS TERM_ROWS=$ROWS
+M="$M"
+V="$V"
+PROJECT_DIR="$PROJECT_DIR"
 $(declare -f _label)
 $(declare -f "demo_${name}")
 demo_${name}
