@@ -38,19 +38,23 @@ effect_glitch() {
     hide_cursor
     local end_time=$((SECONDS + duration))
 
+    local -a glitch_colors=("$THEME_FG" "$THEME_HOT" "$THEME_ACCENT" "$THEME_ELECTRIC")
+    local -a bar_colors=("$THEME_HOT_DIM" "$THEME_ACCENT" "$THEME_ELECTRIC_DIM")
+
     while [ $SECONDS -lt $end_time ]; do
         local row=$(random_int 1 "$ROWS")
         local col=$(random_int 1 "$COLS")
         local char=$(random_frame_char)
 
         move_cursor "$row" "$col"
-        printf "${THEME_FG}%s${RESET}" "$char"
+        printf "${glitch_colors[$((RANDOM % ${#glitch_colors[@]}))]}"
+        printf "%s${RESET}" "$char"
         sleep_ms $((50 / intensity))
 
         if [ $((RANDOM % (10 / intensity))) -eq 0 ]; then
             local glitch_row=$(random_int 1 "$ROWS")
             move_cursor "$glitch_row" 1
-            printf "${REVERSE}${THEME_DIM}"
+            printf "${REVERSE}${bar_colors[$((RANDOM % ${#bar_colors[@]}))]}"
             for ((i=0; i<COLS; i++)); do
                 printf "%s" "$(random_frame_char)"
             done
@@ -80,9 +84,9 @@ effect_static() {
                 line+="${chars[$((RANDOM % ${#chars[@]}))]}"
             done
             if [ $((RANDOM % 3)) -eq 0 ]; then
-                printf "${DIM}%s${RESET}" "$line"
+                printf "${THEME_STEEL_DIM}%s${RESET}" "$line"
             else
-                printf "${THEME_DIM}%s${RESET}" "$line"
+                printf "${THEME_STEEL}%s${RESET}" "$line"
             fi
         done
         sleep_ms 40
@@ -115,14 +119,14 @@ effect_styled_frame() {
     # Top border — builds character by character
     move_cursor "$start_row" "$padding"
     for ((i=0; i<width; i++)); do
-        printf "${THEME_FG}%s${RESET}" "$(random_frame_char)"
+        printf "${THEME_ELECTRIC}%s${RESET}" "$(random_frame_char)"
         sleep_ms 8
     done
 
     # Side borders + text
     local text_row=$((start_row + 1))
     move_cursor "$text_row" "$padding"
-    printf "${THEME_FG}▐${RESET}"
+    printf "${THEME_ELECTRIC}▐${RESET}"
     printf " "
 
     # Text renders character by character

@@ -17,6 +17,16 @@ THEME_WARN="${CLIFX_COLOR_WARN:-\033[38;5;196m}"   # Red
 THEME_BG='\033[48;5;0m'                             # Pure black background
 THEME_GLOW="${CLIFX_COLOR_GLOW:-\033[38;5;83m}"    # Phosphor green (bright/active state)
 
+# --- Extended Palette (category colors) ---
+THEME_COOL='\033[38;5;44m'      # Teal / cyan — spatial, water, CRT
+THEME_COOL_DIM='\033[38;5;30m'  # Dark teal
+THEME_HOT='\033[38;5;208m'      # Amber / orange — corruption, glitch
+THEME_HOT_DIM='\033[38;5;130m'  # Dark amber
+THEME_ELECTRIC='\033[38;5;69m'  # Electric blue — data, tech, sci-fi
+THEME_ELECTRIC_DIM='\033[38;5;25m'  # Dark blue
+THEME_STEEL='\033[38;5;250m'    # Silver / light gray — static, neutral
+THEME_STEEL_DIM='\033[38;5;240m' # Medium gray
+
 # --- Frame Characters ---
 FRAME_CHAR_SET=('░' '▒' '▓' '█' '◈' '◆' '▲' '∷' '∴' '⊹' '⊛' '⌇')
 
