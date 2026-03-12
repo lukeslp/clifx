@@ -211,7 +211,7 @@ effect_process_tree() {
         elif [ "$i" -gt $((total_lines / 2)) ] && [ $((RANDOM % 3)) -eq 0 ]; then
             # Transitional: normal proc with glitchy name
             local proc="${normal_procs[$((RANDOM % ${#normal_procs[@]}))]}"
-            printf "${DIM}%-10s %5d %5s %5s " "coolhand" "$pid" "$cpu" "$mem"
+            printf "${DIM}%-10s %5d %5s %5s " "root" "$pid" "$cpu" "$mem"
             # Corrupt the process name
             local corrupted=""
             for ((c=0; c<${#proc}; c++)); do
@@ -225,7 +225,7 @@ effect_process_tree() {
         else
             # Normal processes
             local proc="${normal_procs[$((RANDOM % ${#normal_procs[@]}))]}"
-            printf "${DIM}%-10s %5d %5s %5s %s${RESET}\n" "coolhand" "$pid" "$cpu" "$mem" "$proc"
+            printf "${DIM}%-10s %5d %5s %5s %s${RESET}\n" "root" "$pid" "$cpu" "$mem" "$proc"
         fi
 
         sleep_ms "$speed"
