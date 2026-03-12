@@ -98,7 +98,8 @@ assemble_fragments() {
 }
 
 # --- Crop a frame to fit terminal viewport ---
-# Centers content and clips to TERM_ROWS x TERM_COLS
+# Centers content and clips to viewport dimensions.
+# Viewport = min(TERM_ROWS, CLIFX_MAX_HEIGHT) x min(TERM_COLS, CLIFX_MAX_WIDTH)
 # Usage: _crop_frame "frame_text"
 # Output: cropped text via stdout
 _crop_frame() {
@@ -115,21 +116,31 @@ _crop_frame() {
         (( len > max_w )) && max_w=$len
     done
 
+    # Viewport: use explicit max if set, clamped to terminal size
+    local vp_cols=$TERM_COLS
+    local vp_rows=$TERM_ROWS
+    if [[ -n "${CLIFX_MAX_WIDTH:-}" ]] && (( CLIFX_MAX_WIDTH > 0 && CLIFX_MAX_WIDTH < vp_cols )); then
+        vp_cols=$CLIFX_MAX_WIDTH
+    fi
+    if [[ -n "${CLIFX_MAX_HEIGHT:-}" ]] && (( CLIFX_MAX_HEIGHT > 0 && CLIFX_MAX_HEIGHT < vp_rows )); then
+        vp_rows=$CLIFX_MAX_HEIGHT
+    fi
+
     # Compute vertical crop range (center the frame in viewport)
-    local avail_rows=$((TERM_ROWS - 1))  # leave 1 row for safety
+    local avail_rows=$((vp_rows - 1))  # leave 1 row for safety
     local y_start=0 y_count=$frame_h
     if (( frame_h > avail_rows )); then
         y_start=$(( (frame_h - avail_rows) / 2 ))
         y_count=$avail_rows
     fi
 
-    # Compute horizontal crop offset (center if wider than terminal)
+    # Compute horizontal crop offset (center if wider than viewport)
     local x_start=0
-    if (( max_w > TERM_COLS )); then
-        x_start=$(( (max_w - TERM_COLS) / 2 ))
+    if (( max_w > vp_cols )); then
+        x_start=$(( (max_w - vp_cols) / 2 ))
     fi
 
-    # Compute left padding to center narrow frames
+    # Compute left padding to center narrow frames in terminal
     local pad=0
     if (( max_w < TERM_COLS )); then
         pad=$(( (TERM_COLS - max_w) / 2 ))
@@ -139,9 +150,9 @@ _crop_frame() {
     for (( i=y_start; i < y_start + y_count && i < frame_h; i++ )); do
         local line="${lines[$i]}"
         if (( x_start > 0 )); then
-            line="${line:$x_start:$TERM_COLS}"
-        elif (( ${#line} > TERM_COLS )); then
-            line="${line:0:$TERM_COLS}"
+            line="${line:$x_start:$vp_cols}"
+        elif (( ${#line} > vp_cols )); then
+            line="${line:0:$vp_cols}"
         fi
         if (( pad > 0 )); then
             [[ -n "$output" ]] && output+=$'\n'

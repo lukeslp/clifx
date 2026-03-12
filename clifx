@@ -44,9 +44,19 @@ _discover_animations() {
         local name
         name=$(basename "$f" .txt)
         ANIM_NAMES+=("$name")
-        local frames
+        local frames max_w=0 max_h=0 cur_h=0
         frames=$(grep -c "^--- Frame" "$f" 2>/dev/null || echo 0)
-        ANIM_INFO+=("$frames frames")
+        while IFS= read -r _line; do
+            if [[ "$_line" == *"--- Frame"* ]]; then
+                (( cur_h > max_h )) && max_h=$cur_h
+                cur_h=0
+            else
+                cur_h=$((cur_h + 1))
+                (( ${#_line} > max_w )) && max_w=${#_line}
+            fi
+        done < "$f"
+        (( cur_h > max_h )) && max_h=$cur_h
+        ANIM_INFO+=("${frames}f ${max_w}x${max_h}")
     done
 }
 _discover_animations
@@ -347,16 +357,38 @@ menu_voices() {
 menu_animations() {
     draw_tui_header
     draw_status_bar
-    printf "  ${UI_ACCENT}ANIMATIONS${RESET}  ${UI_DIM}(viewport: %dx%d)${RESET}\n\n" "$TERM_COLS" "$TERM_ROWS"
+    printf "  ${UI_ACCENT}ANIMATIONS${RESET}  ${UI_DIM}(terminal: %dx%d)${RESET}\n\n" "$TERM_COLS" "$TERM_ROWS"
 
     if [[ ${#ANIM_NAMES[@]} -eq 0 ]]; then
         printf "  ${UI_DIM}No animations found in ascii-animations/${RESET}\n"
     else
-        local i=1
+        local i=1 has_mini=0 has_full=0
+        # First pass: check what we have
         for idx in "${!ANIM_NAMES[@]}"; do
-            printf "  ${BOLD}%2d${RESET}) %-15s ${UI_DIM}%s${RESET}\n" "$i" "${ANIM_NAMES[$idx]}" "${ANIM_INFO[$idx]}"
-            i=$((i + 1))
+            if [[ "${ANIM_NAMES[$idx]}" == mini-* ]]; then
+                has_mini=1
+            else
+                has_full=1
+            fi
         done
+        # Compact animations first
+        if [[ $has_mini -eq 1 ]]; then
+            printf "  ${UI_DIM}── compact (terminal-friendly) ──${RESET}\n"
+            for idx in "${!ANIM_NAMES[@]}"; do
+                [[ "${ANIM_NAMES[$idx]}" != mini-* ]] && continue
+                printf "  ${BOLD}%2d${RESET}) %-18s ${UI_DIM}%s${RESET}\n" "$i" "${ANIM_NAMES[$idx]}" "${ANIM_INFO[$idx]}"
+                i=$((i + 1))
+            done
+        fi
+        # Full-size animations
+        if [[ $has_full -eq 1 ]]; then
+            printf "  ${UI_DIM}── full-size (large terminals) ──${RESET}\n"
+            for idx in "${!ANIM_NAMES[@]}"; do
+                [[ "${ANIM_NAMES[$idx]}" == mini-* ]] && continue
+                printf "  ${BOLD}%2d${RESET}) %-18s ${UI_DIM}%s${RESET}\n" "$i" "${ANIM_NAMES[$idx]}" "${ANIM_INFO[$idx]}"
+                i=$((i + 1))
+            done
+        fi
     fi
 
     printf "\n"
