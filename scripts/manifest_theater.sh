@@ -24,7 +24,7 @@ effect_hex_dump() {
     local addr=0
     for ((line=0; line<lines; line++)); do
         # Address column
-        printf "${THEME_DIM}0x%06X${RESET}  " "$addr"
+        printf "${THEME_ELECTRIC_DIM}0x%06X${RESET}  " "$addr"
 
         # Hex bytes (16 per line)
         local ascii=""
