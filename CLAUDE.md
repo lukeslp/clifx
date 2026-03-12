@@ -38,6 +38,18 @@ bash scripts/play.sh ascii-animations/spiral.txt 12
 
 Set `CLIFX_SPEED_MULT` env var (percentage: 50 = 2x faster, 200 = 2x slower). All timing goes through `sleep_ms()` in `lib/core.sh`, which honors this multiplier.
 
+## Animation Size Control
+
+Animations come in two sizes:
+- **Compact** (`mini-*`): 30-36w x 14-18h — fit standard 80x24 terminals
+- **Full-size**: 100-160w x 51-81h — need large terminals or get center-cropped
+
+Force a max viewport with env vars:
+```bash
+CLIFX_MAX_WIDTH=40 CLIFX_MAX_HEIGHT=20 ./clifx play gears 24 1
+```
+These constrain `_crop_frame()` independently of terminal size. The frame is center-cropped to fit.
+
 ## Architecture
 
 ### Source Order Matters
