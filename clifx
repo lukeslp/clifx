@@ -257,6 +257,7 @@ cmd_help() {
     printf "    ./clifx ${BOLD}<effect>${RESET} [args...]           Run an effect\n"
     printf "    ./clifx ${BOLD}voice${RESET} <msg> [style]          Render text (whisper/speak/shout/corrupt/fragment/clear)\n"
     printf "    ./clifx ${BOLD}play${RESET} <name> [fps] [loops]    Play a frame animation\n"
+    printf "    ./clifx ${BOLD}convert${RESET} <file> [opts]         Convert GIF/video to terminal animation\n"
     printf "    ./clifx ${BOLD}list${RESET}                         List everything available\n"
     printf "    ./clifx ${BOLD}help${RESET}                         This message\n"
     printf "\n"
@@ -264,6 +265,7 @@ cmd_help() {
     printf "    ./clifx rain 5 15\n"
     printf "    ./clifx voice \"system online\" shout\n"
     printf "    ./clifx play gears 24 0\n"
+    printf "    ./clifx convert explosion.gif -w 40 -ht 20\n"
     printf "    CLIFX_SPEED_MULT=50 ./clifx glitch 4 2\n"
     printf "\n"
 }
@@ -628,6 +630,10 @@ case "${1:-}" in
         fps="${2:-12}"
         loops="${3:-1}"
         run_animation "$name" "$fps" "$loops"
+        ;;
+    convert)
+        shift
+        python3 "$CLIFX_DIR/tools/gif2term.py" "$@"
         ;;
     *)
         # Try as an effect name
