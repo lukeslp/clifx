@@ -56,7 +56,7 @@ effect_screen_tear() {
                 done
             fi
 
-            printf "${THEME_DIM}%s${RESET}" "$line"
+            printf "${THEME_HOT_DIM}%s${RESET}" "$line"
         done
 
         sleep_ms $((40 / intensity))
@@ -86,7 +86,7 @@ effect_scanlines() {
         # Sweep scanlines down
         for ((row=1; row<=ROWS; row+=2)); do
             move_cursor "$row" 1
-            printf "${THEME_DIM}"
+            printf "${THEME_COOL_DIM}"
             for ((col=0; col<COLS; col++)); do
                 printf "%s" "$scanline_char"
             done
@@ -107,10 +107,10 @@ effect_scanlines() {
         # Reverse sweep (odd rows)
         for ((row=ROWS; row>=1; row-=2)); do
             move_cursor "$row" 1
-            printf "${THEME_DIM}"
+            printf "${THEME_COOL_DIM}"
             for ((col=0; col<COLS; col++)); do
                 if [ $((RANDOM % 8)) -eq 0 ]; then
-                    printf "${THEME_FG}%s${THEME_DIM}" "$scanline_char"
+                    printf "${THEME_COOL}%s${THEME_COOL_DIM}" "$scanline_char"
                 else
                     printf "%s" "$scanline_char"
                 fi
@@ -219,7 +219,9 @@ effect_signal_noise() {
                     *) line+=" " ;;
                 esac
             done
-            printf "${THEME_DIM}%s${RESET}" "$line"
+            local -a noise_colors=("$THEME_HOT_DIM" "$THEME_ELECTRIC_DIM" "$THEME_STEEL_DIM")
+            printf "${noise_colors[$((RANDOM % ${#noise_colors[@]}))]}"
+            printf "%s${RESET}" "$line"
         done
 
         sleep_ms "$speed"

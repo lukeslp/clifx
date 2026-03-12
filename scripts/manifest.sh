@@ -396,11 +396,11 @@ effect_credits() {
                 [ "$col" -lt 1 ] && col=1
                 move_cursor "$display_row" "$col"
                 if [[ "$line" == *"━"* ]]; then
-                    printf "${THEME_DIM}%s${RESET}" "$line"
+                    printf "${THEME_ELECTRIC_DIM}%s${RESET}" "$line"
                 elif [[ "$line" == *"CLIFX"* ]]; then
-                    printf "${THEME_GLOW}${BOLD}%s${RESET}" "$line"
+                    printf "${THEME_ELECTRIC}${BOLD}%s${RESET}" "$line"
                 else
-                    printf "${DIM}%s${RESET}" "$line"
+                    printf "${THEME_STEEL}%s${RESET}" "$line"
                 fi
             fi
         done
