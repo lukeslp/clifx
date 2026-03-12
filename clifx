@@ -1,0 +1,609 @@
+#!/usr/bin/env bash
+# ============================================================================
+# clifx — Terminal Visual Effects CLI
+# Usage:
+#   ./clifx                         Interactive mode (TUI menu)
+#   ./clifx <effect> [args...]      Run an effect directly
+#   ./clifx voice <msg> [style]     Render text in a voice style
+#   ./clifx play <name> [fps] [loops]  Play a frame animation
+#   ./clifx list                    List all effects, voices, and animations
+#   ./clifx help                    Show usage
+# ============================================================================
+
+set -euo pipefail
+
+CLIFX_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# --- Source library ---
+source "$CLIFX_DIR/lib/core.sh"
+source_lib style terminal text animation ascii
+source_theme default
+
+# Aliases
+COLS=$TERM_COLS
+ROWS=$TERM_ROWS
+
+# Source effect modules
+for _ef in "$CLIFX_DIR"/scripts/manifest_*.sh; do
+    [ -f "$_ef" ] && source "$_ef"
+done
+
+# ─────────────────────────────────────────────────────────────────────
+# Discover animations from ascii-animations/ directory
+# ─────────────────────────────────────────────────────────────────────
+declare -a ANIM_FILES=()
+declare -a ANIM_NAMES=()
+declare -a ANIM_INFO=()
+
+_discover_animations() {
+    local dir="$CLIFX_DIR/ascii-animations"
+    [[ -d "$dir" ]] || return 0
+    for f in "$dir"/*.txt; do
+        [[ -f "$f" ]] || continue
+        ANIM_FILES+=("$f")
+        local name
+        name=$(basename "$f" .txt)
+        ANIM_NAMES+=("$name")
+        local frames
+        frames=$(grep -c "^--- Frame" "$f" 2>/dev/null || echo 0)
+        ANIM_INFO+=("$frames frames")
+    done
+}
+_discover_animations
+
+# ─────────────────────────────────────────────────────────────────────
+# Effect registry (matches manifest.sh dispatch)
+# ─────────────────────────────────────────────────────────────────────
+EFFECTS_CORE=(glitch static flicker styled_frame build_text corruption heartbeat transition color_wave fake_install credits)
+EFFECTS_CORRUPTION=(screen_tear scanlines chromatic_aberration signal_noise datamosh)
+EFFECTS_SPATIAL=(rain spiral ripple orbit)
+EFFECTS_THEATER=(hex_dump waveform process_tree)
+EFFECTS_ATMOSPHERE=(vignette plasma breathe afterimage typewriter_rewind)
+ALL_EFFECTS=("${EFFECTS_CORE[@]}" "${EFFECTS_CORRUPTION[@]}" "${EFFECTS_SPATIAL[@]}" "${EFFECTS_THEATER[@]}" "${EFFECTS_ATMOSPHERE[@]}")
+
+VOICES=(whisper speak shout corrupt fragment clear)
+
+# ─────────────────────────────────────────────────────────────────────
+# Settings
+# ─────────────────────────────────────────────────────────────────────
+SPEED_MULT=100
+COLOR_MODE="default"
+CUSTOM_CODE=""
+
+declare -A PRESET_CODES=(
+    [default]="default"
+    [cyan]="51"
+    [red]="196"
+    [purple]="141"
+    [white]="255"
+    [amber]="214"
+    [blue]="33"
+    [pink]="213"
+)
+PRESET_NAMES=("default" "cyan" "red" "purple" "white" "amber" "blue" "pink")
+
+sync_env() {
+    export CLIFX_SPEED_MULT="$SPEED_MULT"
+    if [[ "$COLOR_MODE" == "default" ]]; then
+        unset CLIFX_COLOR_FG CLIFX_COLOR_GLOW CLIFX_COLOR_DIM CLIFX_COLOR_ACCENT 2>/dev/null || true
+    else
+        local code
+        if [[ "$COLOR_MODE" == "custom" ]]; then
+            code="$CUSTOM_CODE"
+        else
+            code="${PRESET_CODES[$COLOR_MODE]}"
+        fi
+        local esc="\033[38;5;${code}m"
+        export CLIFX_COLOR_FG="$esc"
+        export CLIFX_COLOR_GLOW="$esc"
+        export CLIFX_COLOR_DIM="$esc"
+        export CLIFX_COLOR_ACCENT="$esc"
+    fi
+}
+
+get_display_color() {
+    local name="$1"
+    local code="${PRESET_CODES[$name]:-}"
+    if [[ "$code" == "default" || -z "$code" ]]; then
+        echo '\033[38;5;48m'
+    else
+        echo "\033[38;5;${code}m"
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# Run effect (with sample data for effects that need args)
+# ─────────────────────────────────────────────────────────────────────
+_sample_text="the quick brown fox jumps over the lazy dog"
+_sample_code='fn main() {
+    println!("hello");
+    let x = 42;
+    loop { break; }
+}'
+
+run_effect() {
+    local effect="$1"; shift
+    sync_env
+
+    # If extra args passed from CLI, forward them
+    if [[ $# -gt 0 ]]; then
+        bash "$CLIFX_DIR/scripts/manifest.sh" "$effect" "$@"
+        return
+    fi
+
+    # Default demo args for interactive mode
+    case "$effect" in
+        glitch)        bash "$CLIFX_DIR/scripts/manifest.sh" glitch 3 1 ;;
+        static)        bash "$CLIFX_DIR/scripts/manifest.sh" static 2 ;;
+        flicker)       bash "$CLIFX_DIR/scripts/manifest.sh" flicker 5 ;;
+        styled_frame)  bash "$CLIFX_DIR/scripts/manifest.sh" styled_frame "$_sample_text" ;;
+        build_text)    bash "$CLIFX_DIR/scripts/manifest.sh" build_text "$_sample_text" 30 ;;
+        corruption)    bash "$CLIFX_DIR/scripts/manifest.sh" corruption "$_sample_code" ;;
+        heartbeat)     bash "$CLIFX_DIR/scripts/manifest.sh" heartbeat 5 "◈" ;;
+        transition)    bash "$CLIFX_DIR/scripts/manifest.sh" transition ;;
+        color_wave)    bash "$CLIFX_DIR/scripts/manifest.sh" color_wave 2 down ;;
+        fake_install)  bash "$CLIFX_DIR/scripts/manifest.sh" fake_install ;;
+        credits)       bash "$CLIFX_DIR/scripts/manifest.sh" credits ;;
+        screen_tear)   bash "$CLIFX_DIR/scripts/manifest.sh" screen_tear 2 3 ;;
+        scanlines)     bash "$CLIFX_DIR/scripts/manifest.sh" scanlines 2 20 ;;
+        chromatic_aberration) bash "$CLIFX_DIR/scripts/manifest.sh" chromatic_aberration "$_sample_text" 3 ;;
+        signal_noise)  bash "$CLIFX_DIR/scripts/manifest.sh" signal_noise 2 3 30 ;;
+        datamosh)      bash "$CLIFX_DIR/scripts/manifest.sh" datamosh 2 3 ;;
+        rain)          bash "$CLIFX_DIR/scripts/manifest.sh" rain 4 15 ;;
+        spiral)        bash "$CLIFX_DIR/scripts/manifest.sh" spiral 10 out ;;
+        ripple)        bash "$CLIFX_DIR/scripts/manifest.sh" ripple 2 40 ;;
+        orbit)         bash "$CLIFX_DIR/scripts/manifest.sh" orbit 5 5 "◈" ;;
+        hex_dump)      bash "$CLIFX_DIR/scripts/manifest.sh" hex_dump 20 60 ;;
+        waveform)      bash "$CLIFX_DIR/scripts/manifest.sh" waveform 4 30 ;;
+        process_tree)  bash "$CLIFX_DIR/scripts/manifest.sh" process_tree 80 ;;
+        vignette)      bash "$CLIFX_DIR/scripts/manifest.sh" vignette 3 3 ;;
+        plasma)        bash "$CLIFX_DIR/scripts/manifest.sh" plasma 3 30 ;;
+        breathe)       bash "$CLIFX_DIR/scripts/manifest.sh" breathe 3 "░" ;;
+        afterimage)    bash "$CLIFX_DIR/scripts/manifest.sh" afterimage "$_sample_text" ;;
+        typewriter_rewind) bash "$CLIFX_DIR/scripts/manifest.sh" typewriter_rewind "$_sample_text" "never mind" 35 ;;
+        *)             printf "  ${UI_ERROR}Unknown effect: %s${RESET}\n" "$effect"; return 1 ;;
+    esac
+}
+
+run_voice() {
+    local style="$1"
+    local msg="${2:-$_sample_text}"
+    sync_env
+    bash "$CLIFX_DIR/scripts/voice.sh" "$msg" "$style"
+}
+
+run_animation() {
+    local name="$1"
+    local fps="${2:-12}"
+    local loops="${3:-1}"
+    sync_env
+
+    # Resolve name to file
+    local file=""
+    for i in "${!ANIM_NAMES[@]}"; do
+        if [[ "${ANIM_NAMES[$i]}" == "$name" ]]; then
+            file="${ANIM_FILES[$i]}"
+            break
+        fi
+    done
+
+    # Try as a direct path if not found by name
+    if [[ -z "$file" ]]; then
+        if [[ -f "$name" ]]; then
+            file="$name"
+        elif [[ -f "$CLIFX_DIR/ascii-animations/$name" ]]; then
+            file="$CLIFX_DIR/ascii-animations/$name"
+        elif [[ -f "$CLIFX_DIR/ascii-animations/${name}.txt" ]]; then
+            file="$CLIFX_DIR/ascii-animations/${name}.txt"
+        fi
+    fi
+
+    if [[ -z "$file" || ! -f "$file" ]]; then
+        printf "  ${UI_ERROR}Animation not found: %s${RESET}\n" "$name" >&2
+        printf "  ${UI_DIM}Available: %s${RESET}\n" "${ANIM_NAMES[*]}" >&2
+        return 1
+    fi
+
+    trap 'show_cursor; printf "\033[0m"' EXIT INT TERM
+    play_frames "$file" "$fps" "$loops"
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# CLI: list / help
+# ─────────────────────────────────────────────────────────────────────
+cmd_list() {
+    printf "\n  ${BOLD}Effects${RESET}\n"
+    printf "  ${UI_DIM}── core ──${RESET}\n"
+    printf "    %s\n" "${EFFECTS_CORE[@]}"
+    printf "  ${UI_DIM}── corruption ──${RESET}\n"
+    printf "    %s\n" "${EFFECTS_CORRUPTION[@]}"
+    printf "  ${UI_DIM}── spatial ──${RESET}\n"
+    printf "    %s\n" "${EFFECTS_SPATIAL[@]}"
+    printf "  ${UI_DIM}── theater ──${RESET}\n"
+    printf "    %s\n" "${EFFECTS_THEATER[@]}"
+    printf "  ${UI_DIM}── atmosphere ──${RESET}\n"
+    printf "    %s\n" "${EFFECTS_ATMOSPHERE[@]}"
+
+    printf "\n  ${BOLD}Voices${RESET}\n"
+    printf "    %s\n" "${VOICES[@]}"
+
+    printf "\n  ${BOLD}Animations${RESET}\n"
+    for i in "${!ANIM_NAMES[@]}"; do
+        printf "    %-15s %s\n" "${ANIM_NAMES[$i]}" "${ANIM_INFO[$i]}"
+    done
+    printf "\n"
+}
+
+cmd_help() {
+    printf "\n"
+    printf "  ${BOLD}clifx${RESET} — terminal visual effects\n\n"
+    printf "  ${UI_ACCENT}Usage:${RESET}\n"
+    printf "    ./clifx                              Interactive mode\n"
+    printf "    ./clifx ${BOLD}<effect>${RESET} [args...]           Run an effect\n"
+    printf "    ./clifx ${BOLD}voice${RESET} <msg> [style]          Render text (whisper/speak/shout/corrupt/fragment/clear)\n"
+    printf "    ./clifx ${BOLD}play${RESET} <name> [fps] [loops]    Play a frame animation\n"
+    printf "    ./clifx ${BOLD}list${RESET}                         List everything available\n"
+    printf "    ./clifx ${BOLD}help${RESET}                         This message\n"
+    printf "\n"
+    printf "  ${UI_ACCENT}Examples:${RESET}\n"
+    printf "    ./clifx rain 5 15\n"
+    printf "    ./clifx voice \"system online\" shout\n"
+    printf "    ./clifx play gears 24 0\n"
+    printf "    CLIFX_SPEED_MULT=50 ./clifx glitch 4 2\n"
+    printf "\n"
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# TUI helpers
+# ─────────────────────────────────────────────────────────────────────
+wait_key() {
+    printf "\n  ${UI_DIM}press enter to continue...${RESET}"
+    read -r
+}
+
+draw_tui_header() {
+    clear_screen
+    printf "\n"
+    printf "  ${THEME_GLOW}${BOLD}C L I F X${RESET}\n"
+    printf "  ${UI_DIM}terminal visual effects${RESET}\n"
+    printf "  ${UI_DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
+    printf "\n"
+}
+
+draw_status_bar() {
+    printf "  ${UI_DIM}speed: ${RESET}${BOLD}%d%%${RESET}" "$SPEED_MULT"
+    printf "  ${UI_DIM}│${RESET}  "
+    printf "${UI_DIM}color: ${RESET}${BOLD}%s${RESET}" "$COLOR_MODE"
+    local swatch
+    swatch=$(get_display_color "$COLOR_MODE")
+    printf "  %b██████%b" "$swatch" "$RESET"
+    printf "\n\n"
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# TUI menus
+# ─────────────────────────────────────────────────────────────────────
+menu_main() {
+    draw_tui_header
+    draw_status_bar
+
+    printf "  ${BOLD} 1${RESET}) Effects          ${UI_DIM}%d visual effects${RESET}\n" "${#ALL_EFFECTS[@]}"
+    printf "  ${BOLD} 2${RESET}) Voices           ${UI_DIM}%d text styles${RESET}\n" "${#VOICES[@]}"
+    printf "  ${BOLD} 3${RESET}) Animations       ${UI_DIM}%d frame animations${RESET}\n" "${#ANIM_NAMES[@]}"
+    printf "\n"
+    printf "  ${BOLD} s${RESET}) Speed\n"
+    printf "  ${BOLD} c${RESET}) Color\n"
+    printf "  ${BOLD} q${RESET}) Quit\n"
+    printf "\n"
+    printf "  ${UI_DIM}choice:${RESET} "
+}
+
+menu_effects() {
+    draw_tui_header
+    draw_status_bar
+    printf "  ${UI_ACCENT}EFFECTS${RESET}\n\n"
+
+    local i=1
+    local -a categories=("core" "corruption" "spatial" "theater" "atmosphere")
+    local -a cat_arrays_name=("EFFECTS_CORE" "EFFECTS_CORRUPTION" "EFFECTS_SPATIAL" "EFFECTS_THEATER" "EFFECTS_ATMOSPHERE")
+
+    for ci in "${!categories[@]}"; do
+        printf "  ${UI_DIM}── %s ──${RESET}\n" "${categories[$ci]}"
+        local arrname="${cat_arrays_name[$ci]}[@]"
+        for effect in "${!arrname}"; do
+            printf "  ${BOLD}%2d${RESET}) %s\n" "$i" "$effect"
+            i=$((i + 1))
+        done
+    done
+
+    printf "\n"
+    printf "  ${BOLD} a${RESET}) Run ALL effects\n"
+    printf "  ${BOLD} b${RESET}) Back\n"
+    printf "  ${BOLD} q${RESET}) Quit\n"
+    printf "\n"
+    printf "  ${UI_DIM}choice:${RESET} "
+}
+
+menu_voices() {
+    draw_tui_header
+    draw_status_bar
+    printf "  ${UI_ACCENT}VOICES${RESET}\n\n"
+
+    local i=1
+    for v in "${VOICES[@]}"; do
+        printf "  ${BOLD}%2d${RESET}) %s\n" "$i" "$v"
+        i=$((i + 1))
+    done
+
+    printf "\n"
+    printf "  ${BOLD} a${RESET}) Run ALL voices\n"
+    printf "  ${BOLD} t${RESET}) Custom text\n"
+    printf "  ${BOLD} b${RESET}) Back\n"
+    printf "  ${BOLD} q${RESET}) Quit\n"
+    printf "\n"
+    printf "  ${UI_DIM}choice:${RESET} "
+}
+
+menu_animations() {
+    draw_tui_header
+    draw_status_bar
+    printf "  ${UI_ACCENT}ANIMATIONS${RESET}  ${UI_DIM}(viewport: %dx%d)${RESET}\n\n" "$TERM_COLS" "$TERM_ROWS"
+
+    if [[ ${#ANIM_NAMES[@]} -eq 0 ]]; then
+        printf "  ${UI_DIM}No animations found in ascii-animations/${RESET}\n"
+    else
+        local i=1
+        for idx in "${!ANIM_NAMES[@]}"; do
+            printf "  ${BOLD}%2d${RESET}) %-15s ${UI_DIM}%s${RESET}\n" "$i" "${ANIM_NAMES[$idx]}" "${ANIM_INFO[$idx]}"
+            i=$((i + 1))
+        done
+    fi
+
+    printf "\n"
+    printf "  ${BOLD} b${RESET}) Back\n"
+    printf "  ${BOLD} q${RESET}) Quit\n"
+    printf "\n"
+    printf "  ${UI_DIM}choice:${RESET} "
+}
+
+pick_speed() {
+    draw_tui_header
+    printf "  ${UI_ACCENT}SPEED${RESET}\n\n"
+    printf "  ${BOLD} 1${RESET}) 25%%  (4x faster)\n"
+    printf "  ${BOLD} 2${RESET}) 50%%  (2x faster)\n"
+    printf "  ${BOLD} 3${RESET}) 75%%  (faster)\n"
+    printf "  ${BOLD} 4${RESET}) 100%% (normal)\n"
+    printf "  ${BOLD} 5${RESET}) 150%% (slower)\n"
+    printf "  ${BOLD} 6${RESET}) 200%% (2x slower)\n"
+    printf "  ${BOLD} 7${RESET}) 300%% (3x slower)\n"
+    printf "  ${BOLD} 8${RESET}) Custom\n"
+    printf "\n"
+    printf "  ${UI_DIM}current: %d%%${RESET}\n" "$SPEED_MULT"
+    printf "  ${UI_DIM}choice:${RESET} "
+
+    read -r choice
+    case "$choice" in
+        1) SPEED_MULT=25 ;; 2) SPEED_MULT=50 ;; 3) SPEED_MULT=75 ;;
+        4) SPEED_MULT=100 ;; 5) SPEED_MULT=150 ;; 6) SPEED_MULT=200 ;;
+        7) SPEED_MULT=300 ;;
+        8)
+            printf "  ${UI_DIM}enter speed %% (1-500):${RESET} "
+            read -r val
+            if [[ "$val" =~ ^[0-9]+$ ]] && [[ "$val" -ge 1 ]] && [[ "$val" -le 500 ]]; then
+                SPEED_MULT=$val
+            else
+                printf "  ${UI_ERROR}invalid, keeping %d%%${RESET}\n" "$SPEED_MULT"
+                sleep 1
+            fi
+            ;;
+    esac
+}
+
+pick_color() {
+    draw_tui_header
+    printf "  ${UI_ACCENT}COLOR${RESET}\n\n"
+
+    local i=1
+    for name in "${PRESET_NAMES[@]}"; do
+        local swatch
+        swatch=$(get_display_color "$name")
+        printf "  ${BOLD}%2d${RESET}) %-8s %b██████%b\n" "$i" "$name" "$swatch" "$RESET"
+        i=$((i + 1))
+    done
+    printf "  ${BOLD}%2d${RESET}) Custom 256-color code\n" "$i"
+
+    printf "\n"
+    printf "  ${UI_DIM}current: %s${RESET}\n" "$COLOR_MODE"
+    printf "  ${UI_DIM}choice:${RESET} "
+
+    read -r choice
+    local max_preset=${#PRESET_NAMES[@]}
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [[ "$choice" -ge 1 ]] && [[ "$choice" -le "$max_preset" ]]; then
+        COLOR_MODE="${PRESET_NAMES[$((choice - 1))]}"
+    elif [[ "$choice" =~ ^[0-9]+$ ]] && [[ "$choice" -eq $((max_preset + 1)) ]]; then
+        printf "  ${UI_DIM}enter 256-color code (0-255):${RESET} "
+        read -r val
+        if [[ "$val" =~ ^[0-9]+$ ]] && [[ "$val" -ge 0 ]] && [[ "$val" -le 255 ]]; then
+            COLOR_MODE="custom"
+            CUSTOM_CODE="$val"
+            PRESET_CODES[custom]="$val"
+            printf "  preview: \033[38;5;${val}m██████${RESET}\n"
+            sleep 1
+        else
+            printf "  ${UI_ERROR}invalid code${RESET}\n"
+            sleep 1
+        fi
+    fi
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# TUI main loop
+# ─────────────────────────────────────────────────────────────────────
+tui_run() {
+    local current_menu="main"
+
+    trap 'show_cursor; echo ""; exit 0' INT
+
+    while true; do
+        case "$current_menu" in
+        main)
+            menu_main
+            read -r choice
+            case "$choice" in
+                1) current_menu="effects" ;;
+                2) current_menu="voices" ;;
+                3) current_menu="animations" ;;
+                s|S) pick_speed ;;
+                c|C) pick_color ;;
+                q|Q) echo ""; printf "  ${THEME_DIM}goodbye.${RESET}\n\n"; exit 0 ;;
+            esac
+            ;;
+
+        effects)
+            menu_effects
+            read -r choice
+            case "$choice" in
+                [0-9]|[0-9][0-9])
+                    local idx=$((choice - 1))
+                    if [[ "$idx" -ge 0 ]] && [[ "$idx" -lt "${#ALL_EFFECTS[@]}" ]]; then
+                        echo ""
+                        printf "  ${UI_ACCENT}▶ %s${RESET}\n\n" "${ALL_EFFECTS[$idx]}"
+                        run_effect "${ALL_EFFECTS[$idx]}"
+                        wait_key
+                    fi
+                    ;;
+                a|A)
+                    for effect in "${ALL_EFFECTS[@]}"; do
+                        echo ""
+                        printf "  ${UI_ACCENT}▶ %s${RESET}\n\n" "$effect"
+                        run_effect "$effect"
+                        printf "\n  ${UI_DIM}next in 2s...${RESET}\n"
+                        sleep 2
+                    done
+                    wait_key
+                    ;;
+                b|B) current_menu="main" ;;
+                s|S) pick_speed ;;
+                c|C) pick_color ;;
+                q|Q) echo ""; printf "  ${THEME_DIM}goodbye.${RESET}\n\n"; exit 0 ;;
+            esac
+            ;;
+
+        voices)
+            menu_voices
+            read -r choice
+            case "$choice" in
+                [1-6])
+                    local idx=$((choice - 1))
+                    if [[ "$idx" -ge 0 ]] && [[ "$idx" -lt "${#VOICES[@]}" ]]; then
+                        echo ""
+                        printf "  ${UI_ACCENT}▶ %s${RESET}\n" "${VOICES[$idx]}"
+                        run_voice "${VOICES[$idx]}"
+                        wait_key
+                    fi
+                    ;;
+                a|A)
+                    for v in "${VOICES[@]}"; do
+                        echo ""
+                        printf "  ${UI_ACCENT}▶ %s${RESET}\n" "$v"
+                        run_voice "$v"
+                        printf "\n  ${UI_DIM}next in 2s...${RESET}\n"
+                        sleep 2
+                    done
+                    wait_key
+                    ;;
+                t|T)
+                    printf "  ${UI_DIM}enter text:${RESET} "
+                    read -r custom_text
+                    if [[ -n "$custom_text" ]]; then
+                        printf "  ${UI_DIM}style (whisper/speak/shout/corrupt/fragment/clear):${RESET} "
+                        read -r custom_style
+                        [[ -z "$custom_style" ]] && custom_style="speak"
+                        run_voice "$custom_style" "$custom_text"
+                        wait_key
+                    fi
+                    ;;
+                b|B) current_menu="main" ;;
+                s|S) pick_speed ;;
+                c|C) pick_color ;;
+                q|Q) echo ""; printf "  ${THEME_DIM}goodbye.${RESET}\n\n"; exit 0 ;;
+            esac
+            ;;
+
+        animations)
+            menu_animations
+            read -r choice
+            case "$choice" in
+                [0-9]|[0-9][0-9])
+                    local idx=$((choice - 1))
+                    if [[ "$idx" -ge 0 ]] && [[ "$idx" -lt "${#ANIM_NAMES[@]}" ]]; then
+                        printf "  ${UI_DIM}fps (default 12):${RESET} "
+                        read -r fps_input
+                        [[ -z "$fps_input" ]] && fps_input=12
+                        printf "  ${UI_DIM}loops (0=infinite, default 1):${RESET} "
+                        read -r loops_input
+                        [[ -z "$loops_input" ]] && loops_input=1
+                        run_animation "${ANIM_NAMES[$idx]}" "$fps_input" "$loops_input"
+                        wait_key
+                    fi
+                    ;;
+                b|B) current_menu="main" ;;
+                q|Q) echo ""; printf "  ${THEME_DIM}goodbye.${RESET}\n\n"; exit 0 ;;
+            esac
+            ;;
+        esac
+    done
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# CLI dispatch
+# ─────────────────────────────────────────────────────────────────────
+case "${1:-}" in
+    "")
+        tui_run
+        ;;
+    help|--help|-h)
+        cmd_help
+        ;;
+    list|--list|-l)
+        cmd_list
+        ;;
+    voice)
+        shift
+        msg="${1:?Usage: clifx voice <message> [style]}"
+        style="${2:-speak}"
+        sync_env
+        bash "$CLIFX_DIR/scripts/voice.sh" "$msg" "$style"
+        ;;
+    play)
+        shift
+        name="${1:?Usage: clifx play <name> [fps] [loops]}"
+        fps="${2:-12}"
+        loops="${3:-1}"
+        run_animation "$name" "$fps" "$loops"
+        ;;
+    *)
+        # Try as an effect name
+        effect="$1"
+        shift
+        found=0
+        for e in "${ALL_EFFECTS[@]}"; do
+            if [[ "$e" == "$effect" ]]; then
+                found=1
+                break
+            fi
+        done
+        if [[ "$found" -eq 1 ]]; then
+            sync_env
+            if [[ $# -gt 0 ]]; then
+                bash "$CLIFX_DIR/scripts/manifest.sh" "$effect" "$@"
+            else
+                run_effect "$effect"
+            fi
+        else
+            printf "Unknown command: %s\n" "$effect" >&2
+            printf "Run './clifx help' for usage.\n" >&2
+            exit 1
+        fi
+        ;;
+esac
