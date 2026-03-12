@@ -158,7 +158,7 @@ effect_waveform() {
     clear_line
     for ((c=1; c<=COLS; c++)); do
         move_cursor "$center_row" "$c"
-        printf "${THEME_DIM}%s${RESET}" "${blocks[0]}"
+        printf "${THEME_COOL_DIM}%s${RESET}" "${blocks[0]}"
     done
     sleep_ms 500
     move_cursor "$center_row" 1
@@ -203,11 +203,11 @@ effect_process_tree() {
             # Glitch processes (final third)
             local proc="${glitch_procs[$((RANDOM % ${#glitch_procs[@]}))]}"
             local glitch_pid=$((666 + RANDOM % 33))
-            printf "${THEME_FG}%-10s${RESET} " "???"
-            printf "${THEME_DIM}%5d${RESET} " "$glitch_pid"
+            printf "${THEME_HOT}%-10s${RESET} " "???"
+            printf "${THEME_HOT_DIM}%5d${RESET} " "$glitch_pid"
             printf "${THEME_WARN}%5s${RESET} " "99.9"
-            printf "${THEME_DIM}%5s${RESET} " "0.0"
-            printf "${THEME_GLOW}%s${RESET}\n" "$proc"
+            printf "${THEME_STEEL_DIM}%5s${RESET} " "0.0"
+            printf "${THEME_WARN}${BOLD}%s${RESET}\n" "$proc"
         elif [ "$i" -gt $((total_lines / 2)) ] && [ $((RANDOM % 3)) -eq 0 ]; then
             # Transitional: normal proc with glitchy name
             local proc="${normal_procs[$((RANDOM % ${#normal_procs[@]}))]}"
