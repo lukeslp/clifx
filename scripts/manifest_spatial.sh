@@ -227,11 +227,11 @@ effect_ripple() {
                     local char_idx=$((r % ${#ring_chars[@]}))
                     move_cursor "$py" "$px"
                     if [ "$r" -lt 3 ]; then
-                        printf "${THEME_GLOW}%s${RESET}" "${ring_chars[$char_idx]}"
+                        printf "${THEME_COOL}${BOLD}%s${RESET}" "${ring_chars[$char_idx]}"
                     elif [ "$r" -lt 6 ]; then
-                        printf "${THEME_FG}%s${RESET}" "${ring_chars[$char_idx]}"
+                        printf "${THEME_COOL}%s${RESET}" "${ring_chars[$char_idx]}"
                     else
-                        printf "${THEME_DIM}%s${RESET}" "${ring_chars[$char_idx]}"
+                        printf "${THEME_COOL_DIM}%s${RESET}" "${ring_chars[$char_idx]}"
                     fi
                 fi
             done

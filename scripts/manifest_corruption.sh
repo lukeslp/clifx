@@ -287,7 +287,9 @@ effect_datamosh() {
                         line+="░"
                     fi
                 done
-                printf "${THEME_ACCENT}%s${RESET}" "$line"
+                local -a mosh_colors=("$THEME_ACCENT" "$THEME_HOT" "$THEME_ELECTRIC")
+                printf "${mosh_colors[$((b % ${#mosh_colors[@]}))]}"
+                printf "%s${RESET}" "$line"
             done
         done
 
