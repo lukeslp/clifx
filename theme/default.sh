@@ -11,7 +11,7 @@ _CLIFX_THEME_DEFAULT_LOADED=1
 # --- Theme Palette ---
 # Each can be overridden via CLIFX_COLOR_* env vars (for testing/theming)
 THEME_FG="${CLIFX_COLOR_FG:-\033[38;5;48m}"        # Bright toxic green
-THEME_DIM="${CLIFX_COLOR_DIM:-\033[38;5;22m}"      # Dark forest green
+THEME_DIM="${CLIFX_COLOR_DIM:-\033[38;5;35m}"      # Muted green (legible on dark backgrounds)
 THEME_ACCENT="${CLIFX_COLOR_ACCENT:-\033[38;5;93m}" # Deep purple
 THEME_WARN="${CLIFX_COLOR_WARN:-\033[38;5;196m}"   # Red
 THEME_BG='\033[48;5;0m'                             # Pure black background
