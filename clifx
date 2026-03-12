@@ -238,8 +238,13 @@ cmd_list() {
     printf "    %s\n" "${VOICES[@]}"
 
     printf "\n  ${BOLD}Animations${RESET}\n"
+    printf "  ${UI_DIM}── compact ──${RESET}\n"
     for i in "${!ANIM_NAMES[@]}"; do
-        printf "    %-15s %s\n" "${ANIM_NAMES[$i]}" "${ANIM_INFO[$i]}"
+        [[ "${ANIM_NAMES[$i]}" == mini-* ]] && printf "    %-18s %s\n" "${ANIM_NAMES[$i]}" "${ANIM_INFO[$i]}"
+    done
+    printf "  ${UI_DIM}── full-size ──${RESET}\n"
+    for i in "${!ANIM_NAMES[@]}"; do
+        [[ "${ANIM_NAMES[$i]}" != mini-* ]] && printf "    %-18s %s\n" "${ANIM_NAMES[$i]}" "${ANIM_INFO[$i]}"
     done
     printf "\n"
 }
