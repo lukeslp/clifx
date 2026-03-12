@@ -341,11 +341,11 @@ effect_orbit() {
         move_cursor "$py" "$px"
         # Pulse brightness based on position
         if [ $((step % 4)) -eq 0 ]; then
-            printf "${THEME_GLOW}${BOLD}%s${RESET}" "$symbol"
+            printf "${THEME_ELECTRIC}${BOLD}%s${RESET}" "$symbol"
         elif [ $((step % 4)) -eq 2 ]; then
-            printf "${THEME_DIM}%s${RESET}" "$symbol"
+            printf "${THEME_ELECTRIC_DIM}%s${RESET}" "$symbol"
         else
-            printf "${THEME_FG}%s${RESET}" "$symbol"
+            printf "${THEME_COOL}%s${RESET}" "$symbol"
         fi
 
         prev_x=$px
