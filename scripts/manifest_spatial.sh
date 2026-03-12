@@ -136,12 +136,17 @@ effect_spiral() {
 
     local total=${#sx[@]}
 
+    # Color gradient for spiral expansion
+    local -a spiral_colors=(48 44 33 63 93 128 196 208 214)
+    local spiral_clen=${#spiral_colors[@]}
+
     if [ "$direction" = "in" ]; then
         # Draw from outside in
         for ((i=total-1; i>=0; i--)); do
             move_cursor "${sy[$i]}" "${sx[$i]}"
-            printf "${THEME_FG}%s${RESET}" "${FRAME_CHAR_SET[$((RANDOM % ${#FRAME_CHAR_SET[@]}))]}"
-            # Speed up as we approach center
+            local cidx=$(( i * spiral_clen / total ))
+            [ "$cidx" -ge "$spiral_clen" ] && cidx=$((spiral_clen - 1))
+            printf "\033[38;5;${spiral_colors[$cidx]}m%s${RESET}" "${FRAME_CHAR_SET[$((RANDOM % ${#FRAME_CHAR_SET[@]}))]}"
             local remaining=$((i + 1))
             if [ "$remaining" -gt 100 ]; then
                 [ $((i % 3)) -eq 0 ] && sleep_ms "$speed"
@@ -153,12 +158,13 @@ effect_spiral() {
         # Draw from center out
         for ((i=0; i<total; i++)); do
             move_cursor "${sy[$i]}" "${sx[$i]}"
+            local cidx=$(( i * spiral_clen / total ))
+            [ "$cidx" -ge "$spiral_clen" ] && cidx=$((spiral_clen - 1))
             if [ $((i % 20)) -lt 3 ]; then
-                printf "${THEME_GLOW}${BOLD}%s${RESET}" "${FRAME_CHAR_SET[$((RANDOM % ${#FRAME_CHAR_SET[@]}))]}"
+                printf "\033[38;5;${spiral_colors[$cidx]}m${BOLD}%s${RESET}" "${FRAME_CHAR_SET[$((RANDOM % ${#FRAME_CHAR_SET[@]}))]}"
             else
-                printf "${THEME_FG}%s${RESET}" "${FRAME_CHAR_SET[$((RANDOM % ${#FRAME_CHAR_SET[@]}))]}"
+                printf "\033[38;5;${spiral_colors[$cidx]}m%s${RESET}" "${FRAME_CHAR_SET[$((RANDOM % ${#FRAME_CHAR_SET[@]}))]}"
             fi
-            # Only sleep every few chars for performance
             [ $((i % 2)) -eq 0 ] && sleep_ms "$speed"
         done
     fi
