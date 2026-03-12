@@ -1,10 +1,18 @@
 # clifx
 
-Terminal visual effects in pure Bash. Glitch washes, matrix rain, screen corruption, typing animations, progress bars, box drawing — 26 effects and 6 text rendering styles, all built on ANSI escape codes.
+Terminal visual effects in pure Bash. Glitch washes, matrix rain, screen corruption, typing animations, progress bars, box drawing — 28 effects, 6 text voices, and a frame animation player, all built on ANSI escape codes.
 
 No dependencies. No build step. Just `source` and go.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+---
+
+<p align="center">
+  <img src="demos/showcase.svg" alt="clifx showcase" width="700">
+</p>
+
+---
 
 ## Install
 
@@ -27,129 +35,155 @@ bash clifx/scripts/voice.sh "hello world" whisper
 bash clifx/scripts/voice.sh "ALERT" shout
 bash clifx/scripts/voice.sh "corrupted data stream" corrupt
 
+# Play a frame animation
+bash clifx/scripts/play.sh ascii-animations/spiral.txt 12
+
 # Interactive tester — browse all effects with speed/color controls
 bash clifx/scripts/tester.sh
 ```
 
-## Demos
+---
+
+## Effects
+
+### Core Effects
+
+11 foundational effects: glitch overlays, static noise, screen flicker, bordered frames, typing animations, code corruption, heartbeat pulses, screen transitions, color waves, fake package installs, and scrolling credits.
 
 <p align="center">
-  <img src="demos/showcase.svg" alt="clifx showcase" width="600">
+  <img src="demos/core.svg" alt="core effects" width="700">
 </p>
 
-### Text Effects
-
-<img src="demos/build_text.svg" alt="build_text effect" width="600">
-
 ```bash
-bash scripts/manifest.sh build_text "Something is loading..." 25
+bash scripts/manifest.sh glitch 4 3           # intensity (1-5), duration (seconds)
+bash scripts/manifest.sh static 2             # duration
+bash scripts/manifest.sh flicker 5            # flash count
 bash scripts/manifest.sh styled_frame "SYSTEM ONLINE"
+bash scripts/manifest.sh build_text "Loading..." 25
+bash scripts/manifest.sh corruption "$(cat some_file.sh)"
+bash scripts/manifest.sh heartbeat 5 "◈"      # pulse count, symbol
+bash scripts/manifest.sh transition
+bash scripts/manifest.sh color_wave 3 down     # waves, direction
+bash scripts/manifest.sh fake_install
 bash scripts/manifest.sh credits
 ```
 
-### Glitch & Corruption
+### Screen Corruption
 
-<img src="demos/chromatic.svg" alt="chromatic aberration effect" width="600">
+5 effects that degrade and distort the display: tearing, scanlines, chromatic aberration, signal noise, and datamosh compression artifacts.
+
+<p align="center">
+  <img src="demos/corruption.svg" alt="corruption effects" width="700">
+</p>
 
 ```bash
-# Args: intensity (1-5), duration (seconds)
-bash scripts/manifest.sh glitch 4 3
-bash scripts/manifest.sh static 2
-bash scripts/manifest.sh flicker 5
-bash scripts/manifest.sh corruption "$(cat some_file.sh)"
+bash scripts/manifest.sh screen_tear 3 2          # intensity, duration
+bash scripts/manifest.sh scanlines 3 20           # duration, speed
 bash scripts/manifest.sh chromatic_aberration "SIGNAL LOST" 3
-bash scripts/manifest.sh screen_tear 3 2
-bash scripts/manifest.sh scanlines 3 20
-bash scripts/manifest.sh signal_noise 3 3 30
-bash scripts/manifest.sh datamosh 3 3
+bash scripts/manifest.sh signal_noise 3 3 30      # intensity, duration, speed
+bash scripts/manifest.sh datamosh 3 3             # intensity, duration
 ```
 
 ### Spatial Effects
 
+4 effects that fill the screen with movement: matrix rain, spirals, ripple waves, and orbiting symbols.
+
+<p align="center">
+  <img src="demos/spatial.svg" alt="spatial effects" width="700">
+</p>
+
 ```bash
-# Matrix rain, spirals, ripples, orbiting symbols
-bash scripts/manifest.sh rain 5 15
-bash scripts/manifest.sh spiral 10 out
-bash scripts/manifest.sh ripple 3 40
-bash scripts/manifest.sh orbit 8 5 "@"
+bash scripts/manifest.sh rain 5 15      # duration, speed
+bash scripts/manifest.sh spiral 10 out  # radius, direction (in/out)
+bash scripts/manifest.sh ripple 3 40    # waves, speed
+bash scripts/manifest.sh orbit 8 5 "@"  # revolutions, speed, symbol
 ```
 
 ### Theater Effects
 
+3 effects that fake system output: scrolling hex dumps with hidden messages, EKG-style waveforms, and a process listing that progressively corrupts.
+
+<p align="center">
+  <img src="demos/theater.svg" alt="theater effects" width="700">
+</p>
+
 ```bash
-# Fake hex dump, waveform visualization, process tree
-bash scripts/manifest.sh hex_dump 30 60
-bash scripts/manifest.sh waveform 5 30
-bash scripts/manifest.sh process_tree 100
+bash scripts/manifest.sh hex_dump 30 60      # lines, speed
+bash scripts/manifest.sh waveform 5 30       # duration, speed
+bash scripts/manifest.sh process_tree 100    # speed
 ```
 
 ### Atmosphere Effects
 
-<img src="demos/heartbeat.svg" alt="heartbeat effect" width="600">
+5 ambient effects: vignette darkening, plasma fields, breathing patterns, text afterimages, and typewriter text that rewinds and replaces itself.
+
+<p align="center">
+  <img src="demos/atmosphere.svg" alt="atmosphere effects" width="700">
+</p>
 
 ```bash
 bash scripts/manifest.sh vignette 4 3
 bash scripts/manifest.sh plasma 4 30
 bash scripts/manifest.sh breathe 4 "░"
 bash scripts/manifest.sh afterimage "hello world"
-bash scripts/manifest.sh heartbeat 5 "◈"
 bash scripts/manifest.sh typewriter_rewind "i was going to say something" "never mind" 35
-```
-
-### Fake Install
-
-<img src="demos/fake_install.svg" alt="fake install effect" width="600">
-
-```bash
-bash scripts/manifest.sh fake_install
 ```
 
 ### Text Voices
 
-Six styles for rendering text with different visual personalities:
+6 styles for rendering text with different visual personalities: whisper (dim, slow), speak (bordered), shout (inverted, bold), corrupt (glitch overlays), fragment (scattered), and clear (centered, clean).
 
-<img src="demos/voice_whisper.svg" alt="whisper voice" width="600">
-<img src="demos/voice_shout.svg" alt="shout voice" width="600">
-<img src="demos/voice_corrupt.svg" alt="corrupt voice" width="600">
-
-```bash
-bash scripts/voice.sh "do you hear that" whisper       # dim, slow, lowercase
-bash scripts/voice.sh "status report" speak             # framed with border
-bash scripts/voice.sh "red alert" shout                 # inverted, bold, UPPERCASE
-bash scripts/voice.sh "signal degrading" corrupt        # random glitch overlays
-bash scripts/voice.sh "the words kept breaking" fragment # scattered across lines
-bash scripts/voice.sh "THE END" clear                   # centered, bold, clean
-```
-
-### Recording Your Own Demos
+<p align="center">
+  <img src="demos/voices.svg" alt="text voices" width="700">
+</p>
 
 ```bash
-# Record all effects as .cast + .svg
-bash demos/record.sh
-
-# Record one specific effect
-bash demos/record.sh rain
-
-# List available demos
-bash demos/record.sh --list
-
-# Convert existing .cast files to SVG
-bash demos/record.sh --convert
+bash scripts/voice.sh "do you hear that" whisper
+bash scripts/voice.sh "status report" speak
+bash scripts/voice.sh "red alert" shout
+bash scripts/voice.sh "signal degrading" corrupt
+bash scripts/voice.sh "the words kept breaking" fragment
+bash scripts/voice.sh "THE END" clear
 ```
 
-Requires `asciinema` and `svg-term-cli` (`npm install -g svg-term-cli`).
+---
 
-### All Effects
+## ASCII Animations
 
-| Category | Effects |
-|----------|---------|
-| Core | `glitch` `static` `flicker` `styled_frame` `build_text` `corruption` `heartbeat` `transition` `color_wave` `fake_install` `credits` |
-| Corruption | `screen_tear` `scanlines` `chromatic_aberration` `signal_noise` `datamosh` |
-| Spatial | `rain` `spiral` `ripple` `orbit` |
-| Theater | `hex_dump` `waveform` `process_tree` |
-| Atmosphere | `vignette` `plasma` `breathe` `afterimage` `typewriter_rewind` |
+Play frame-by-frame animations from text files. Ships with 5 animations — spirals, gears, cubes, Bauhaus patterns, and more.
 
-Run `bash scripts/manifest.sh help` for the full list with arguments.
+```bash
+# Play an animation (file, fps, loops)
+bash scripts/play.sh ascii-animations/spiral.txt 12
+bash scripts/play.sh ascii-animations/gears.txt 24 0    # loop forever
+bash scripts/play.sh ascii-animations/cube.txt 15 3     # 3 loops
+
+# Or via manifest
+bash scripts/manifest.sh play ascii-animations/bauhaus.txt 10
+```
+
+Animation file format — frames separated by `--- Frame N ---` delimiters:
+
+```
+--- Frame 1 ---
+  ╔══╗
+  ║  ║
+  ╚══╝
+--- Frame 2 ---
+  ╔══╗
+  ║██║
+  ╚══╝
+```
+
+| Animation | Frames | Description |
+|-----------|--------|-------------|
+| `spiral.txt` | 15 | Rotating spiral pattern in block characters |
+| `gears.txt` | 501 | Interlocking mechanical gears |
+| `cube.txt` | 121 | 3D rotating cube |
+| `bauhaus.txt` | 84 | Bauhaus-inspired geometric patterns |
+| `ironman.txt` | 250 | Character portrait |
+
+---
 
 ## Use as a Library
 
@@ -157,121 +191,100 @@ Source the modules you need in your own scripts:
 
 ```bash
 source "path/to/clifx/lib/core.sh"
-source_lib style terminal text animation progress box divider
+source_lib style terminal text animation progress box divider ascii
 source_theme default
 ```
 
 `core.sh` must be sourced first — it bootstraps the loader. After that, pick what you need.
 
-### Text Rendering
+<details>
+<summary><strong>Text Rendering</strong></summary>
 
 ```bash
-# Character-by-character typing with punctuation pauses
 type_text "Initializing system..." 30 "$THEME_GLOW"
-
-# Centered text
 center_text "[ STATUS OK ]" "$UI_SUCCESS"
-
-# Word wrap to width
-wrap_text "This is a long string that will be wrapped at word boundaries" 40
-
-# Truncate with ellipsis
-truncate_text "A very long status message that won't fit" 25 "..."
-
-# Indent a block of text
+wrap_text "Long string that wraps at word boundaries" 40
+truncate_text "A very long status message" 25 "..."
 echo "some output" | indent 4
 ```
+</details>
 
-### Progress Indicators
+<details>
+<summary><strong>Progress Indicators</strong></summary>
 
 ```bash
-# Spinner that runs while a command executes
 spinner "Compiling assets" make build
-
-# Progress bar (current, total, width, color)
-for i in $(seq 1 10); do
-    printf "\r"
-    progress_bar "$i" 10 30 "$UI_SUCCESS"
-    sleep 0.2
-done
-echo ""
-
-# Fake progress dots
+progress_bar 7 10 30 "$UI_SUCCESS"
 fake_progress "Loading configuration" 2000
-
-# Checklist items
 checklist_item "Dependencies installed" done
-checklist_item "Config validated" done
-checklist_item "Database migration" pending
 checklist_item "Health check" fail
-
-# Fake package install line
 install_line "express@4.18.2"
-install_line "chalk@5.3.0"
 ```
+</details>
 
-### Box Drawing
+<details>
+<summary><strong>Box Drawing</strong></summary>
 
 Four border styles: `single`, `double`, `rounded`, `heavy`.
 
 ```bash
-# Box around text
 draw_box_text "Status: OK" rounded "$THEME_FG"
-draw_box_text "WARNING: disk full" heavy "$UI_WARN"
-
-# Multi-line panel
 draw_panel single "$THEME_FG" "Line 1" "Line 2" "Line 3"
-
-# Header bar with centered title
 draw_header "Configuration" thick "$THEME_ACCENT"
-
-# Empty box outline (width, height)
 draw_box 40 5 double "$UI_INFO"
 ```
+</details>
 
-### Dividers
+<details>
+<summary><strong>Dividers</strong></summary>
 
 Six line styles: `thin`, `thick`, `double`, `dotted`, `dashed`, `wave`.
 
 ```bash
 divider thin "$THEME_DIM"
-divider thick "$THEME_FG"
 divider wave "$THEME_ACCENT"
-
-# With centered label
 divider_text "Section Break" thick "$THEME_FG"
-divider_text "Results" double "$UI_SUCCESS"
 ```
+</details>
 
-### Animation Primitives
+<details>
+<summary><strong>Animation Primitives</strong></summary>
 
 ```bash
-sweep_down 10 "$THEME_DIM" "░"    # Screen wipe from top
-sweep_up 10                        # Screen wipe from bottom
-flash_screen 3                     # Flash/reverse whole screen
-pulse "ALERT" 5 "$THEME_GLOW" "$THEME_DIM"  # Pulse between bright and dim
-fill_random 50 "$THEME_FG"        # Fill screen with random chars
+sweep_down 10 "$THEME_DIM" "░"
+sweep_up 10
+flash_screen 3
+pulse "ALERT" 5 "$THEME_GLOW" "$THEME_DIM"
+fill_random 50 "$THEME_FG"
 ```
+</details>
 
-### Style Utilities
+<details>
+<summary><strong>Style Utilities</strong></summary>
 
 ```bash
-# 256-color codes
 printf "$(fg 196)Red text$(style_reset)\n"
 printf "$(bg 21)Blue background$(style_reset)\n"
 printf "$(fg_rgb 255 128 0)Orange from RGB$(style_reset)\n"
-
-# Modifiers
 printf "${BOLD}Bold${RESET} ${DIM}Dim${RESET} ${ITALIC}Italic${RESET}\n"
-printf "${UNDERLINE}Underline${RESET} ${REVERSE}Reverse${RESET}\n"
-
-# UI semantic colors
 printf "${UI_SUCCESS}Success${RESET} ${UI_WARN}Warning${RESET} ${UI_ERROR}Error${RESET}\n"
-
-# Capability detection
 supports_256_color && echo "256-color supported"
-supports_truecolor && echo "Truecolor supported"
 ```
+</details>
+
+<details>
+<summary><strong>Frame Animations</strong></summary>
+
+```bash
+source "path/to/clifx/lib/core.sh"
+source_lib terminal ascii
+
+play_frames "animation.txt" 12 1        # file, fps, loops (0=infinite)
+play_frames "animation.txt" 24 0 "$THEME_FG"  # with color tint
+```
+</details>
+
+---
 
 ## Speed Control
 
@@ -282,23 +295,30 @@ export CLIFX_SPEED_MULT=50   # 2x faster (50% of normal delay)
 export CLIFX_SPEED_MULT=200  # 2x slower (200% of normal delay)
 ```
 
-The interactive tester (`tester.sh`) lets you adjust speed live.
-
 ## Themes
 
-The default theme is neon green on black. Override any color with env vars:
+The default theme is neon green on black. Override with env vars or create a theme file in `theme/`:
 
 ```bash
 export CLIFX_COLOR_FG='\033[38;5;196m'
 export CLIFX_COLOR_GLOW='\033[38;5;196m'
 export CLIFX_COLOR_DIM='\033[38;5;52m'
 export CLIFX_COLOR_ACCENT='\033[38;5;214m'
-bash scripts/manifest.sh rain
 ```
 
-Or create a theme file in `theme/` following the pattern in `theme/default.sh`.
-
 Theme variables: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_WARN`, `THEME_BG`.
+
+## All Effects
+
+| Category | Effects |
+|----------|---------|
+| Core | `glitch` `static` `flicker` `styled_frame` `build_text` `corruption` `heartbeat` `transition` `color_wave` `fake_install` `credits` |
+| Corruption | `screen_tear` `scanlines` `chromatic_aberration` `signal_noise` `datamosh` |
+| Spatial | `rain` `spiral` `ripple` `orbit` |
+| Theater | `hex_dump` `waveform` `process_tree` |
+| Atmosphere | `vignette` `plasma` `breathe` `afterimage` `typewriter_rewind` |
+| Voices | `whisper` `speak` `shout` `corrupt` `fragment` `clear` |
+| Animation | `play` (frame player) |
 
 ## Module Reference
 
@@ -313,7 +333,7 @@ Theme variables: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_W
 | `box` | `draw_box`, `draw_box_text`, `draw_header`, `draw_panel` |
 | `divider` | `divider`, `divider_text`, `blank_lines` |
 | `corruption` | `corrupted_install_sequence`, `glitch_wash`, `script_freeze` |
-| `ascii` | `render_art`, `render_art_animated`, `assemble_fragments` |
+| `ascii` | `render_art`, `render_art_animated`, `assemble_fragments`, `play_frames` |
 
 ## Adding Effects
 
@@ -322,6 +342,17 @@ Theme variables: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_W
 3. Write your `effect_name()` function — use `hide_cursor`/`show_cursor`, reference `ROWS`/`COLS`
 4. Add a dispatch case in `scripts/manifest.sh`
 5. Add to `scripts/tester.sh` arrays
+
+## Recording Demos
+
+```bash
+bash demos/record.sh             # Record all demos
+bash demos/record.sh core        # Record one specific demo
+bash demos/record.sh --list      # List available demos
+bash demos/record.sh --convert   # Convert .cast files to SVG
+```
+
+Requires `asciinema` and `svg-term-cli` (`npm install -g svg-term-cli`).
 
 ## Requirements
 

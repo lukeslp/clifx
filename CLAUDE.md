@@ -44,9 +44,11 @@ lib/core.sh          ← source this first (bootstrap, constants, sleep_ms, sour
 ├── lib/box.sh       ← draw_box, draw_box_text, draw_header, draw_panel (4 border styles)
 ├── lib/divider.sh   ← divider, divider_text, blank_lines (6 line styles)
 ├── lib/corruption.sh← corrupted install sequences, glitch_wash, RTL rendering, script_freeze
-├── lib/ascii.sh     ← render_art, render_art_animated, assemble_fragments
+├── lib/ascii.sh     ← render_art, render_art_animated, assemble_fragments, play_frames
 │
 theme/default.sh     ← default color palette + frame characters (overridable via CLIFX_COLOR_*)
+│
+ascii-animations/    ← frame-delimited animation files (.txt) — spiral, gears, cube, bauhaus, ironman
 │
 scripts/manifest.sh          ← effect dispatcher (sources all manifest_*.sh modules)
 ├── scripts/manifest_corruption.sh ← screen_tear, scanlines, chromatic_aberration, signal_noise, datamosh
@@ -55,6 +57,7 @@ scripts/manifest.sh          ← effect dispatcher (sources all manifest_*.sh mo
 ├── scripts/manifest_atmosphere.sh ← vignette, plasma, breathe, afterimage, typewriter_rewind
 │
 scripts/voice.sh     ← text voice renderer (whisper, speak, shout, corrupt, fragment, clear)
+scripts/play.sh      ← standalone frame animation player (wraps play_frames with trap/cleanup)
 scripts/tester.sh    ← interactive TUI for testing all effects with speed/color overrides
 ```
 
@@ -73,7 +76,7 @@ Theme colors are overridable via env vars (`CLIFX_COLOR_FG`, `CLIFX_COLOR_GLOW`,
 
 Theme vars: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_WARN`, `THEME_BG`.
 
-### Effect Categories (26 total)
+### Effect Categories (28 effects + frame player)
 
 | Category | File | Effects |
 |----------|------|---------|
@@ -82,6 +85,7 @@ Theme vars: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_WARN`,
 | Spatial | `manifest_spatial.sh` | rain, spiral, ripple, orbit |
 | Theater | `manifest_theater.sh` | hex_dump, waveform, process_tree |
 | Atmosphere | `manifest_atmosphere.sh` | vignette, plasma, breathe, afterimage, typewriter_rewind |
+| Animation | `manifest.sh` (play) | play (frame animation from .txt files) |
 
 ### Adding New Effects
 

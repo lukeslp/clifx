@@ -17,7 +17,7 @@ set -euo pipefail
 # --- Source library ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/core.sh"
-source_lib style terminal text animation
+source_lib style terminal text animation ascii
 source_theme default
 
 # Source effect modules
@@ -438,6 +438,8 @@ case "${1:-help}" in
     breathe)       effect_breathe "${2:-4}" "${3:-░}" ;;
     afterimage)    effect_afterimage "${2:-hello world}" "${3:-}" ;;
     typewriter_rewind) effect_typewriter_rewind "${2:-i was going to tell you something}" "${3:-never mind}" "${4:-35}" "${5:-}" ;;
+    # --- Frame animation ---
+    play)              play_frames "${2:?Usage: play <file> [fps] [loops]}" "${3:-12}" "${4:-1}" "${5:-}" ;;
     help)
         echo "Usage: bash manifest.sh <effect> [args...]"
         echo ""
@@ -457,6 +459,9 @@ case "${1:-help}" in
         echo ""
         echo "Atmosphere effects:"
         echo "  vignette, plasma, breathe, afterimage, typewriter_rewind"
+        echo ""
+        echo "Frame animation:"
+        echo "  play <file> [fps] [loops]"
         ;;
     *)
         echo "Unknown effect: $1" >&2
