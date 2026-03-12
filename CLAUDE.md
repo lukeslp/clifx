@@ -11,17 +11,27 @@ No build step. No dependencies beyond Bash 4+ and a terminal that supports 256-c
 ## Running
 
 ```bash
-# Run a specific effect
-bash scripts/manifest.sh <effect_name> [args...]
+# Top-level CLI (interactive TUI when run with no args)
+./clifx
 
-# Interactive tester with speed/color controls
-bash scripts/tester.sh
+# Run a specific effect
+./clifx <effect_name> [args...]
+./clifx rain 5 15
+./clifx chromatic_aberration "SIGNAL LOST" 3
 
 # Voice/text rendering
-bash scripts/voice.sh "message" [whisper|speak|shout|corrupt|fragment|clear]
+./clifx voice "message" shout
 
-# List all available effects
-bash scripts/manifest.sh help
+# Play a frame animation (auto-constrained to terminal viewport)
+./clifx play gears 24 0
+
+# List all effects, voices, and animations
+./clifx list
+
+# Lower-level scripts (still work, used internally by ./clifx)
+bash scripts/manifest.sh <effect_name> [args...]
+bash scripts/voice.sh "message" [whisper|speak|shout|corrupt|fragment|clear]
+bash scripts/play.sh ascii-animations/spiral.txt 12
 ```
 
 ## Speed Control
