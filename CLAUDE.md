@@ -151,6 +151,20 @@ Theme vars: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_WARN`,
 
 Drop a `--- Frame N ---` delimited `.txt` file into `ascii-animations/`. The `./clifx` TUI auto-discovers it. Frames are automatically center-cropped to fit the terminal viewport via `_crop_frame()` in `lib/ascii.sh`.
 
+Naming convention determines TUI grouping:
+- `mini-*` — compact procedural animations (grouped under "compact")
+- `term-*` — converted from GIF/video via `gif2term.py`, contain ANSI color codes (also "compact")
+- Everything else — "full-size" category
+
+### Animation File Types
+
+There are two distinct formats in `ascii-animations/`:
+
+1. **Plain ASCII** (all `mini-*` and full-size files): printable characters only, measured and cropped by character count
+2. **ANSI-colored** (`term-*` files from converter): contain `\033[38;2;R;G;Bm` true-color escapes for half-block rendering
+
+`_crop_frame()` in `lib/ascii.sh` detects ANSI content and skips horizontal cropping (substring ops would break escape sequences). Vertical cropping still works. When measuring width, ANSI codes are stripped via `_strip_ansi()` before counting.
+
 ### Key Conventions
 
 - All timing uses `sleep_ms` (never raw `sleep` for sub-second delays) — this ensures speed multiplier works
@@ -159,3 +173,5 @@ Drop a `--- Frame N ---` delimited `.txt` file into `ascii-animations/`. The `./
 - Theme colors: use `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_WARN` from current theme
 - Frame characters come from `FRAME_CHAR_SET` array; use `random_frame_char()` to pick one
 - `manifest_*.sh` files are sourced by `manifest.sh` — they should not be run directly
+- The `clifx` CLI dispatches via a `case` block: `voice`, `play`, `convert`, `list`, `help` are named commands; anything else is tried as an effect name via `run_effect()`
+- The TUI animation menu displays in a custom order (compact first, then full-size) using `_anim_order` index mapping — selection numbers don't map 1:1 to `ANIM_NAMES` array indices
