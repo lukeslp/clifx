@@ -21,7 +21,7 @@ STRIKETHROUGH='\033[9m'
 
 # --- Standard UI Colors ---
 UI_FG='\033[37m'          # Default foreground (white)
-UI_DIM='\033[90m'         # Gray / muted
+UI_DIM='\033[38;5;245m'   # Medium gray (legible on dark backgrounds)
 UI_ACCENT='\033[36m'      # Cyan accent
 UI_SUCCESS='\033[32m'     # Green
 UI_WARN='\033[33m'        # Yellow
