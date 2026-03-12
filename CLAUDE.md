@@ -105,7 +105,11 @@ Theme vars: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_WARN`,
 2. Add an include guard at the top: `[[ -n "${_CLIFX_MANIFEST_YOURMODULE_LOADED:-}" ]] && return 0`
 3. Define `effect_yourname()` — use `hide_cursor`/`show_cursor`, reference `ROWS`/`COLS`
 4. Add a dispatch entry in `manifest.sh`'s `case` block and `help` output
-5. Add to `tester.sh`'s effect arrays and `run_effect()` case block
+5. Add to `clifx`'s `ALL_EFFECTS` array and `run_effect()` case block (for interactive TUI + direct CLI)
+
+### Adding New Animations
+
+Drop a `--- Frame N ---` delimited `.txt` file into `ascii-animations/`. The `./clifx` TUI auto-discovers it. Frames are automatically center-cropped to fit the terminal viewport via `_crop_frame()` in `lib/ascii.sh`.
 
 ### Key Conventions
 
