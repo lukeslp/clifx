@@ -50,6 +50,28 @@ CLIFX_MAX_WIDTH=40 CLIFX_MAX_HEIGHT=20 ./clifx play gears 24 1
 ```
 These constrain `_crop_frame()` independently of terminal size. The frame is center-cropped to fit.
 
+## GIF/Video to Terminal Converter
+
+Convert GIF or video files to colored terminal animations using Unicode half-block characters (`▀`) with true-color ANSI. Each character cell renders 2 vertical pixels.
+
+```bash
+# Convert a GIF (game-ready: 40x20 chars)
+./clifx convert explosion.gif -w 40 -ht 20
+
+# Convert with custom name and preview
+./clifx convert cutscene.gif -o intro --preview
+
+# Video files work too (uses ffmpeg)
+./clifx convert clip.mp4 -w 50 -ht 25 --max-frames 60
+
+# Tiny sprite with dithering
+./clifx convert sprite.gif -w 16 -ht 8 --dither
+```
+
+Output lands in `ascii-animations/` as `term-<name>.txt`, playable via `./clifx play`.
+
+Requires: Python 3, Pillow (`pip install Pillow`), ffmpeg (for video files).
+
 ## Architecture
 
 ### Source Order Matters
