@@ -76,8 +76,8 @@ effect_plasma() {
 
     hide_cursor
 
-    # Color palette: green spectrum (256-color indices)
-    local -a palette=(22 28 34 40 46 83 119 155 119 83 46 40 34 28)
+    # Color palette: full spectrum (256-color indices)
+    local -a palette=(196 208 214 226 118 48 44 33 63 93 128 161 196 208)
     local palette_len=${#palette[@]}
 
     local end_time=$((SECONDS + duration))
@@ -148,8 +148,8 @@ effect_breathe() {
         lines+=("$line")
     done
 
-    # Color phases for breathing cycle (uses theme color gradient)
-    local -a breath_colors=("$THEME_DIM" "$THEME_FG" "$THEME_GLOW" "$THEME_FG" "$THEME_DIM")
+    # Color phases for breathing cycle (rotates through palette)
+    local -a breath_colors=("$THEME_ELECTRIC_DIM" "$THEME_COOL" "$THEME_GLOW" "$THEME_HOT" "$THEME_ACCENT" "$THEME_COOL_DIM")
 
     for ((c=0; c<cycles; c++)); do
         for color in "${breath_colors[@]}"; do
