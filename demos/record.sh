@@ -3,8 +3,8 @@
 # record.sh — Record clifx demos as .cast files, convert to SVG
 #
 # Usage:
-#   bash demos/record.sh              # Record all demos
-#   bash demos/record.sh rain         # Record one specific demo
+#   bash demos/record.sh              # Record all composite demos
+#   bash demos/record.sh core         # Record one specific demo
 #   bash demos/record.sh --list       # List available demos
 #   bash demos/record.sh --convert    # Convert existing .cast files to SVG
 #
@@ -16,138 +16,204 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DEMO_DIR="$SCRIPT_DIR"
+M="$PROJECT_DIR/scripts/manifest.sh"
+V="$PROJECT_DIR/scripts/voice.sh"
 
-# Terminal size for recordings (consistent across demos)
+# Terminal size for recordings
 COLS=80
 ROWS=24
 
-# --- Demo definitions ---
-# Each demo is a function that runs the effect with good args for recording.
-# Keep them short (2-5 seconds) so the GIFs/SVGs aren't huge.
-
-demo_rain() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" rain 2 12
+# --- Helper: label between effects ---
+_label() {
+    printf '\033[2J\033[H'  # clear
+    printf '\033[38;5;240m'
+    printf '\n  ─── %s ───\n\n' "$1"
+    printf '\033[0m'
+    sleep 0.8
 }
 
-demo_glitch() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" glitch 4 2
+# ============================================================================
+# Composite demos — one per source file, showing all effects
+# ============================================================================
+
+# manifest.sh: 11 core effects
+demo_core() {
+    export CLIFX_SPEED_MULT=70
+
+    _label "glitch (intensity 4, 2s)"
+    bash "$M" glitch 4 2
+
+    _label "static (2s)"
+    bash "$M" static 2
+
+    _label "flicker (5 flashes)"
+    bash "$M" flicker 5
+    sleep 0.3
+
+    _label "styled_frame"
+    bash "$M" styled_frame "SYSTEM ONLINE"
+    sleep 1
+
+    _label "build_text"
+    bash "$M" build_text "Something is loading..." 20
+    sleep 0.5
+
+    _label "corruption"
+    bash "$M" corruption "$(printf 'import sys\ndef main():\n    config = load()\n    if not config:\n        raise RuntimeError\n    return process(config)\n\nif __name__ == \"__main__\":\n    main()')"
+    sleep 0.5
+
+    _label "heartbeat"
+    bash "$M" heartbeat 4 "◈"
+
+    _label "transition"
+    bash "$M" transition
+
+    _label "color_wave (3 waves, down)"
+    bash "$M" color_wave 2 down
+
+    _label "fake_install"
+    bash "$M" fake_install
+
+    _label "credits"
+    bash "$M" credits
+
+    unset CLIFX_SPEED_MULT
 }
 
-demo_static() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" static 2
+# manifest_corruption.sh: 5 screen corruption effects
+demo_corruption() {
+    export CLIFX_SPEED_MULT=70
+
+    _label "screen_tear (intensity 3, 2s)"
+    bash "$M" screen_tear 3 2
+
+    _label "scanlines (3s)"
+    bash "$M" scanlines 3 20
+
+    _label "chromatic_aberration"
+    bash "$M" chromatic_aberration "SIGNAL LOST" 3
+
+    _label "signal_noise (intensity 3, 2s)"
+    bash "$M" signal_noise 3 2 30
+
+    _label "datamosh (intensity 3, 2s)"
+    bash "$M" datamosh 3 2
+
+    unset CLIFX_SPEED_MULT
 }
 
-demo_chromatic() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" chromatic_aberration "SIGNAL LOST" 3
+# manifest_spatial.sh: 4 spatial effects
+demo_spatial() {
+    export CLIFX_SPEED_MULT=70
+
+    _label "rain (3s)"
+    bash "$M" rain 3 12
+
+    _label "spiral (outward)"
+    bash "$M" spiral 8 out
+
+    _label "ripple (3 waves)"
+    bash "$M" ripple 3 40
+
+    _label "orbit (6 revolutions)"
+    bash "$M" orbit 6 5 "◈"
+
+    unset CLIFX_SPEED_MULT
 }
 
-demo_plasma() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" plasma 2 30
+# manifest_theater.sh: 3 theater effects
+demo_theater() {
+    export CLIFX_SPEED_MULT=70
+
+    _label "hex_dump (20 lines)"
+    bash "$M" hex_dump 20 50
+
+    _label "waveform (3s)"
+    bash "$M" waveform 3 30
+
+    _label "process_tree"
+    bash "$M" process_tree 80
+
+    unset CLIFX_SPEED_MULT
 }
 
-demo_spiral() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" spiral 8 out
+# manifest_atmosphere.sh: 5 atmosphere effects
+demo_atmosphere() {
+    export CLIFX_SPEED_MULT=70
+
+    _label "vignette (3s)"
+    bash "$M" vignette 3 3
+
+    _label "plasma (3s)"
+    bash "$M" plasma 3 30
+
+    _label "breathe (3 cycles)"
+    bash "$M" breathe 3 "░"
+
+    _label "afterimage"
+    bash "$M" afterimage "hello world"
+
+    _label "typewriter_rewind"
+    bash "$M" typewriter_rewind "i was going to say something" "never mind" 30
+
+    unset CLIFX_SPEED_MULT
 }
 
-demo_ripple() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" ripple 3 40
+# voice.sh: all 6 voice styles
+demo_voices() {
+    export CLIFX_SPEED_MULT=70
+
+    _label "whisper"
+    bash "$V" "do you hear that" whisper
+    sleep 0.3
+
+    _label "speak"
+    bash "$V" "status report" speak
+    sleep 0.5
+
+    _label "shout"
+    bash "$V" "red alert" shout
+    sleep 0.3
+
+    _label "corrupt"
+    bash "$V" "signal degrading rapidly" corrupt
+    sleep 0.3
+
+    _label "fragment"
+    bash "$V" "the words kept breaking apart and i could not stop them" fragment
+    sleep 0.3
+
+    _label "clear"
+    bash "$V" "THE END" clear
+    sleep 0.5
+
+    unset CLIFX_SPEED_MULT
 }
 
-demo_orbit() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" orbit 6 5 "◈"
-}
-
-demo_hex_dump() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" hex_dump 20 60
-}
-
-demo_waveform() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" waveform 3 30
-}
-
-demo_screen_tear() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" screen_tear 3 2
-}
-
-demo_scanlines() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" scanlines 3 20
-}
-
-demo_datamosh() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" datamosh 3 2
-}
-
-demo_breathe() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" breathe 3 "░"
-}
-
-demo_vignette() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" vignette 3 3
-}
-
-demo_afterimage() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" afterimage "hello world"
-}
-
-demo_typewriter_rewind() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" typewriter_rewind "i was going to say something" "never mind" 35
-}
-
-demo_heartbeat() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" heartbeat 5 "◈"
-}
-
-demo_styled_frame() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" styled_frame "SYSTEM ONLINE"
-}
-
-demo_build_text() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" build_text "Something is loading..." 25
-}
-
-demo_fake_install() {
-    bash "$PROJECT_DIR/scripts/manifest.sh" fake_install
-}
-
-demo_voice_whisper() {
-    bash "$PROJECT_DIR/scripts/voice.sh" "do you hear that" whisper
-}
-
-demo_voice_shout() {
-    bash "$PROJECT_DIR/scripts/voice.sh" "red alert" shout
-}
-
-demo_voice_corrupt() {
-    bash "$PROJECT_DIR/scripts/voice.sh" "signal degrading rapidly" corrupt
-}
-
-demo_voice_fragment() {
-    bash "$PROJECT_DIR/scripts/voice.sh" "the words kept breaking apart" fragment
-}
-
-# --- Showcase: quick montage of several effects ---
+# showcase: quick highlight reel for the hero section
 demo_showcase() {
     export CLIFX_SPEED_MULT=60
-    clear
-    bash "$PROJECT_DIR/scripts/manifest.sh" styled_frame "CLIFX"
+    printf '\033[2J\033[H'
+    bash "$M" styled_frame "C L I F X"
     sleep 0.3
-    bash "$PROJECT_DIR/scripts/manifest.sh" glitch 3 1
-    bash "$PROJECT_DIR/scripts/manifest.sh" chromatic_aberration "TERMINAL EFFECTS" 2
-    bash "$PROJECT_DIR/scripts/voice.sh" "pure bash. no dependencies." whisper
-    sleep 0.5
+    bash "$M" glitch 3 1
+    bash "$M" rain 2 15
+    bash "$M" chromatic_aberration "TERMINAL EFFECTS" 2
+    bash "$M" plasma 2 30
+    bash "$V" "pure bash. no dependencies." whisper
+    sleep 0.8
     unset CLIFX_SPEED_MULT
 }
 
 # --- All demo names ---
 ALL_DEMOS=(
     showcase
-    rain glitch static chromatic plasma
-    spiral ripple orbit
-    hex_dump waveform
-    screen_tear scanlines datamosh
-    breathe vignette afterimage typewriter_rewind heartbeat
-    styled_frame build_text fake_install
-    voice_whisper voice_shout voice_corrupt voice_fragment
+    core
+    corruption
+    spatial
+    theater
+    atmosphere
+    voices
 )
 
 # --- Record a single demo ---
@@ -161,17 +227,18 @@ record_one() {
     # Create a wrapper script for asciinema to execute
     local tmp_script
     tmp_script=$(mktemp /tmp/clifx-demo-XXXXXX.sh)
+
+    # We need to export the helper and the demo function
     cat > "$tmp_script" << WRAPPER
 #!/usr/bin/env bash
-source "$SCRIPT_DIR/../lib/core.sh" 2>/dev/null || true
 export TERM_COLS=$COLS TERM_ROWS=$ROWS
+$(declare -f _label)
 $(declare -f "demo_${name}")
 demo_${name}
 WRAPPER
     chmod +x "$tmp_script"
 
-    # Record with fixed terminal size via stty
-    # asciinema 2.x picks up size from the terminal
+    # Record — asciinema 2.x picks up terminal size from stty
     stty cols "$COLS" rows "$ROWS" 2>/dev/null || true
     asciinema rec \
         --overwrite \
@@ -231,17 +298,6 @@ case "${1:---help}" in
         convert_all
         ;;
     --all|"")
-        # Export demo functions so asciinema subshell can see them
-        export PROJECT_DIR
-        export -f demo_rain demo_glitch demo_static demo_chromatic demo_plasma
-        export -f demo_spiral demo_ripple demo_orbit
-        export -f demo_hex_dump demo_waveform
-        export -f demo_screen_tear demo_scanlines demo_datamosh
-        export -f demo_breathe demo_vignette demo_afterimage demo_typewriter_rewind demo_heartbeat
-        export -f demo_styled_frame demo_build_text demo_fake_install
-        export -f demo_voice_whisper demo_voice_shout demo_voice_corrupt demo_voice_fragment
-        export -f demo_showcase
-
         for name in "${ALL_DEMOS[@]}"; do
             record_one "$name"
         done
@@ -258,11 +314,8 @@ case "${1:---help}" in
         echo "Requires: asciinema, svg-term-cli"
         ;;
     *)
-        # Record a single named demo
         name="$1"
         if declare -f "demo_${name}" &>/dev/null; then
-            export PROJECT_DIR
-            export -f "demo_${name}"
             record_one "$name"
         else
             echo "Unknown demo: $name"
