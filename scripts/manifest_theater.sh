@@ -45,7 +45,7 @@ effect_hex_dump() {
                 # Encode the hidden message char as hex
                 local msg_char="${inject_msg:$byte:1}"
                 if [ "$msg_char" != " " ]; then
-                    printf "${THEME_FG}%s%s${RESET} " "$h1" "$h2"
+                    printf "${THEME_HOT}%s%s${RESET} " "$h1" "$h2"
                 else
                     printf "${DIM}%s%s${RESET} " "$h1" "$h2"
                 fi
@@ -67,7 +67,7 @@ effect_hex_dump() {
 
         # ASCII column
         if [ "$is_inject_line" -eq 1 ]; then
-            printf " ${THEME_GLOW}|%-16s|${RESET}" "$inject_msg"
+            printf " ${THEME_HOT}${BOLD}|%-16s|${RESET}" "$inject_msg"
         else
             printf " ${DIM}|%-16s|${RESET}" "$ascii"
         fi
