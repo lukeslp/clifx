@@ -105,7 +105,7 @@ effect_waveform() {
 
     while [ $SECONDS -lt $end_time ]; do
         local val
-        local color="$THEME_FG"
+        local color="$THEME_COOL"
 
         case $phase in
             0)  # Normal heartbeat pattern
@@ -116,7 +116,7 @@ effect_waveform() {
                     val=6  # QRS spike up
                 elif [ "$cycle" -eq 5 ]; then
                     val=7  # Peak
-                    color="$THEME_GLOW"
+                    color="$THEME_ELECTRIC"
                 elif [ "$cycle" -eq 6 ]; then
                     val=2  # Drop
                 elif [ "$cycle" -eq 7 ]; then
@@ -127,7 +127,7 @@ effect_waveform() {
                 ;;
             1)  # Flatline
                 val=1
-                color="$THEME_DIM"
+                color="$THEME_COOL_DIM"
                 ;;
             2)  # Erratic spike
                 val=$((RANDOM % num_blocks))
