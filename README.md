@@ -1,15 +1,16 @@
 # clifx
 
-Terminal visual effects in pure Bash. Glitch washes, matrix rain, screen corruption, typing animations, progress bars, box drawing — 28 effects, 6 text voices, and a frame animation player, all built on ANSI escape codes.
+Terminal visual effects in pure Bash. Glitch washes, matrix rain, screen corruption, typing animations, progress bars, box drawing — 28 effects, 6 text voices, and a frame animation player with GIF-to-terminal converter. All built on ANSI escape codes.
 
 No dependencies. No build step. Just `source` and go.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Bash 4+](https://img.shields.io/badge/bash-4%2B-green.svg)
 
 ---
 
 <p align="center">
-  <img src="demos/showcase.svg" alt="clifx showcase" width="700">
+  <img src="1intro.gif" alt="clifx showcase" width="700">
 </p>
 
 ---
@@ -18,6 +19,7 @@ No dependencies. No build step. Just `source` and go.
 
 ```bash
 git clone https://github.com/lukeslp/clifx.git
+cd clifx
 ```
 
 Or grab just the parts you need — every file is self-contained once you have `lib/core.sh`.
@@ -25,21 +27,27 @@ Or grab just the parts you need — every file is self-contained once you have `
 ## Quick Start
 
 ```bash
-# Run any effect directly
-bash clifx/scripts/manifest.sh rain
-bash clifx/scripts/manifest.sh glitch 3 2
-bash clifx/scripts/manifest.sh chromatic_aberration "SIGNAL LOST" 3
+# Interactive TUI — browse effects, voices, animations with speed/color controls
+./clifx
 
-# Render text in different styles
-bash clifx/scripts/voice.sh "hello world" whisper
-bash clifx/scripts/voice.sh "ALERT" shout
-bash clifx/scripts/voice.sh "corrupted data stream" corrupt
+# Run any effect directly
+./clifx rain 5 15
+./clifx glitch 3 2
+./clifx chromatic_aberration "SIGNAL LOST" 3
+
+# Text voices
+./clifx voice "hello world" whisper
+./clifx voice "ALERT" shout
+./clifx voice "corrupted data stream" corrupt
 
 # Play a frame animation
-bash clifx/scripts/play.sh ascii-animations/spiral.txt 12
+./clifx play mini-smallcube 24 1
 
-# Interactive tester — browse all effects with speed/color controls
-bash clifx/scripts/tester.sh
+# Convert a GIF to a terminal animation
+./clifx convert explosion.gif -w 40 -ht 20
+
+# List everything
+./clifx list
 ```
 
 ---
@@ -50,67 +58,55 @@ bash clifx/scripts/tester.sh
 
 11 foundational effects: glitch overlays, static noise, screen flicker, bordered frames, typing animations, code corruption, heartbeat pulses, screen transitions, color waves, fake package installs, and scrolling credits.
 
-<p align="center">
-  <img src="demos/core.svg" alt="core effects" width="700">
-</p>
-
 ```bash
-bash scripts/manifest.sh glitch 4 3           # intensity (1-5), duration (seconds)
-bash scripts/manifest.sh static 2             # duration
-bash scripts/manifest.sh flicker 5            # flash count
-bash scripts/manifest.sh styled_frame "SYSTEM ONLINE"
-bash scripts/manifest.sh build_text "Loading..." 25
-bash scripts/manifest.sh corruption "$(cat some_file.sh)"
-bash scripts/manifest.sh heartbeat 5 "◈"      # pulse count, symbol
-bash scripts/manifest.sh transition
-bash scripts/manifest.sh color_wave 3 down     # waves, direction
-bash scripts/manifest.sh fake_install
-bash scripts/manifest.sh credits
+./clifx glitch 4 3                    # intensity (1-5), duration (seconds)
+./clifx static 2                      # duration
+./clifx flicker 5                     # flash count
+./clifx styled_frame "SYSTEM ONLINE"
+./clifx build_text "Loading..." 25
+./clifx corruption "$(cat some_file.sh)"
+./clifx heartbeat 5 "◈"              # pulse count, symbol
+./clifx transition
+./clifx color_wave 3 down             # waves, direction
+./clifx fake_install
+./clifx credits
 ```
+
+<p align="center">
+  <img src="2fake.gif" alt="fake install effect" width="700">
+</p>
 
 ### Screen Corruption
 
 5 effects that degrade and distort the display: tearing, scanlines, chromatic aberration, signal noise, and datamosh compression artifacts.
 
-<p align="center">
-  <img src="demos/corruption.svg" alt="corruption effects" width="700">
-</p>
-
 ```bash
-bash scripts/manifest.sh screen_tear 3 2          # intensity, duration
-bash scripts/manifest.sh scanlines 3 20           # duration, speed
-bash scripts/manifest.sh chromatic_aberration "SIGNAL LOST" 3
-bash scripts/manifest.sh signal_noise 3 3 30      # intensity, duration, speed
-bash scripts/manifest.sh datamosh 3 3             # intensity, duration
+./clifx screen_tear 3 2              # intensity, duration
+./clifx scanlines 3 20               # duration, speed
+./clifx chromatic_aberration "SIGNAL LOST" 3
+./clifx signal_noise 3 3 30          # intensity, duration, speed
+./clifx datamosh 3 3                 # intensity, duration
 ```
 
 ### Spatial Effects
 
 4 effects that fill the screen with movement: matrix rain, spirals, ripple waves, and orbiting symbols.
 
-<p align="center">
-  <img src="demos/spatial.svg" alt="spatial effects" width="700">
-</p>
-
 ```bash
-bash scripts/manifest.sh rain 5 15      # duration, speed
-bash scripts/manifest.sh spiral 10 out  # radius, direction (in/out)
-bash scripts/manifest.sh ripple 3 40    # waves, speed
-bash scripts/manifest.sh orbit 8 5 "@"  # revolutions, speed, symbol
+./clifx rain 5 15                    # duration, speed
+./clifx spiral 10 out                # radius, direction (in/out)
+./clifx ripple 3 40                  # waves, speed
+./clifx orbit 8 5 "@"                # revolutions, speed, symbol
 ```
 
 ### Theater Effects
 
 3 effects that fake system output: scrolling hex dumps with hidden messages, EKG-style waveforms, and a process listing that progressively corrupts.
 
-<p align="center">
-  <img src="demos/theater.svg" alt="theater effects" width="700">
-</p>
-
 ```bash
-bash scripts/manifest.sh hex_dump 30 60      # lines, speed
-bash scripts/manifest.sh waveform 5 30       # duration, speed
-bash scripts/manifest.sh process_tree 100    # speed
+./clifx hex_dump 30 60               # lines, speed
+./clifx waveform 5 30                # duration, speed
+./clifx process_tree 100             # speed
 ```
 
 ### Atmosphere Effects
@@ -118,51 +114,70 @@ bash scripts/manifest.sh process_tree 100    # speed
 5 ambient effects: vignette darkening, plasma fields, breathing patterns, text afterimages, and typewriter text that rewinds and replaces itself.
 
 <p align="center">
-  <img src="demos/atmosphere.svg" alt="atmosphere effects" width="700">
+  <img src="3complex.gif" alt="atmosphere and complex effects" width="700">
 </p>
 
 ```bash
-bash scripts/manifest.sh vignette 4 3
-bash scripts/manifest.sh plasma 4 30
-bash scripts/manifest.sh breathe 4 "░"
-bash scripts/manifest.sh afterimage "hello world"
-bash scripts/manifest.sh typewriter_rewind "i was going to say something" "never mind" 35
+./clifx vignette 4 3
+./clifx plasma 4 30
+./clifx breathe 4 "░"
+./clifx afterimage "hello world"
+./clifx typewriter_rewind "i was going to say something" "never mind" 35
 ```
 
 ### Text Voices
 
 6 styles for rendering text with different visual personalities: whisper (dim, slow), speak (bordered), shout (inverted, bold), corrupt (glitch overlays), fragment (scattered), and clear (centered, clean).
 
-<p align="center">
-  <img src="demos/voices.svg" alt="text voices" width="700">
-</p>
-
 ```bash
-bash scripts/voice.sh "do you hear that" whisper
-bash scripts/voice.sh "status report" speak
-bash scripts/voice.sh "red alert" shout
-bash scripts/voice.sh "signal degrading" corrupt
-bash scripts/voice.sh "the words kept breaking" fragment
-bash scripts/voice.sh "THE END" clear
+./clifx voice "do you hear that" whisper
+./clifx voice "status report" speak
+./clifx voice "red alert" shout
+./clifx voice "signal degrading" corrupt
+./clifx voice "the words kept breaking" fragment
+./clifx voice "THE END" clear
 ```
 
 ---
 
-## ASCII Animations
+## Animations
 
-Play frame-by-frame animations from text files. Ships with 5 animations — spirals, gears, cubes, Bauhaus patterns, and more.
+### Compact Animations (terminal-friendly)
+
+Designed for standard 80x24 terminals. No cropping needed.
+
+| Animation | Size | Frames | Description |
+|-----------|------|--------|-------------|
+| `mini-smallcube` | 40x21 | 121 | Rotating 3D cube in block characters |
+| `mini-smallspiral` | 40x21 | 15 | Spiral pattern |
+| `mini-cube` | 30x16 | 24 | Wireframe cube |
+| `mini-spiral` | 30x15 | 20 | Procedural spiral |
+| `mini-wave` | 36x14 | 16 | Overlapping sine waves |
+| `mini-pulse` | 30x16 | 16 | Expanding/contracting rings |
+| `mini-rain` | 35x18 | 20 | Falling matrix drops |
+| `mini-spinner` | 14x9 | 12 | Rotating spinner |
 
 ```bash
-# Play an animation (file, fps, loops)
-bash scripts/play.sh ascii-animations/spiral.txt 12
-bash scripts/play.sh ascii-animations/gears.txt 24 0    # loop forever
-bash scripts/play.sh ascii-animations/cube.txt 15 3     # 3 loops
-
-# Or via manifest
-bash scripts/manifest.sh play ascii-animations/bauhaus.txt 10
+./clifx play mini-smallcube 24 0     # 24 fps, loop forever
+./clifx play mini-wave 12 3          # 12 fps, 3 loops
 ```
 
-Animation file format — frames separated by `--- Frame N ---` delimiters:
+### Full-Size Animations
+
+Need large terminals (100+ columns). Automatically center-cropped to fit smaller viewports.
+
+| Animation | Size | Frames |
+|-----------|------|--------|
+| `gears` | 100x51 | 501 |
+| `ironman` | 100x51 | 250 |
+| `cube` | 100x51 | 121 |
+| `cube-alt` | 160x81 | 121 |
+| `bauhaus` | 100x51 | 84 |
+| `spiral` | 160x81 | 15 |
+
+### Animation File Format
+
+Frames separated by `--- Frame N ---` delimiters:
 
 ```
 --- Frame 1 ---
@@ -175,13 +190,31 @@ Animation file format — frames separated by `--- Frame N ---` delimiters:
   ╚══╝
 ```
 
-| Animation | Frames | Description |
-|-----------|--------|-------------|
-| `spiral.txt` | 15 | Rotating spiral pattern in block characters |
-| `gears.txt` | 501 | Interlocking mechanical gears |
-| `cube.txt` | 121 | 3D rotating cube |
-| `bauhaus.txt` | 84 | Bauhaus-inspired geometric patterns |
-| `ironman.txt` | 250 | Character portrait |
+Drop a `.txt` file into `ascii-animations/` and the TUI picks it up automatically.
+
+---
+
+## GIF/Video Converter
+
+Convert GIF or video files to colored terminal animations. Uses Unicode half-block characters (`▀`) with true-color ANSI — each character cell renders 2 vertical pixels.
+
+```bash
+# Convert a GIF (game-ready size)
+./clifx convert explosion.gif -w 40 -ht 20
+
+# Custom output name + preview first frame
+./clifx convert cutscene.gif -o intro --preview
+
+# Video files (uses ffmpeg)
+./clifx convert clip.mp4 -w 50 -ht 25 --max-frames 60
+
+# Tiny sprite with dithering
+./clifx convert sprite.gif -w 16 -ht 8 --dither
+```
+
+Output lands in `ascii-animations/` as a playable `.txt` file.
+
+Requires Python 3 + Pillow (`pip install Pillow`). Video conversion also needs ffmpeg.
 
 ---
 
@@ -279,7 +312,7 @@ supports_256_color && echo "256-color supported"
 source "path/to/clifx/lib/core.sh"
 source_lib terminal ascii
 
-play_frames "animation.txt" 12 1        # file, fps, loops (0=infinite)
+play_frames "animation.txt" 12 1              # file, fps, loops (0=infinite)
 play_frames "animation.txt" 24 0 "$THEME_FG"  # with color tint
 ```
 </details>
@@ -294,6 +327,16 @@ Every timing call goes through `sleep_ms()`, which honors a global multiplier:
 export CLIFX_SPEED_MULT=50   # 2x faster (50% of normal delay)
 export CLIFX_SPEED_MULT=200  # 2x slower (200% of normal delay)
 ```
+
+## Animation Viewport
+
+Constrain the animation viewport independently of terminal size:
+
+```bash
+CLIFX_MAX_WIDTH=40 CLIFX_MAX_HEIGHT=20 ./clifx play gears 24 1
+```
+
+Frames are center-cropped to fit. Useful for embedding animations in a smaller region of the screen.
 
 ## Themes
 
@@ -318,7 +361,7 @@ Theme variables: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_W
 | Theater | `hex_dump` `waveform` `process_tree` |
 | Atmosphere | `vignette` `plasma` `breathe` `afterimage` `typewriter_rewind` |
 | Voices | `whisper` `speak` `shout` `corrupt` `fragment` `clear` |
-| Animation | `play` (frame player) |
+| Animation | `play` (frame player) + `convert` (GIF/video importer) |
 
 ## Module Reference
 
@@ -333,7 +376,7 @@ Theme variables: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_W
 | `box` | `draw_box`, `draw_box_text`, `draw_header`, `draw_panel` |
 | `divider` | `divider`, `divider_text`, `blank_lines` |
 | `corruption` | `corrupted_install_sequence`, `glitch_wash`, `script_freeze` |
-| `ascii` | `render_art`, `render_art_animated`, `assemble_fragments`, `play_frames` |
+| `ascii` | `render_art`, `render_art_animated`, `assemble_fragments`, `play_frames`, `_crop_frame` |
 
 ## Adding Effects
 
@@ -341,25 +384,25 @@ Theme variables: `THEME_FG`, `THEME_DIM`, `THEME_GLOW`, `THEME_ACCENT`, `THEME_W
 2. Add an include guard: `[[ -n "${_CLIFX_MANIFEST_YOURMOD_LOADED:-}" ]] && return 0`
 3. Write your `effect_name()` function — use `hide_cursor`/`show_cursor`, reference `ROWS`/`COLS`
 4. Add a dispatch case in `scripts/manifest.sh`
-5. Add to `scripts/tester.sh` arrays
+5. Add to `clifx`'s `ALL_EFFECTS` array and `run_effect()` case block
 
-## Recording Demos
+## Adding Animations
+
+Drop a `--- Frame N ---` delimited `.txt` file into `ascii-animations/`. The TUI auto-discovers it. Prefix with `mini-` for the compact category.
+
+Or convert from GIF/video:
 
 ```bash
-bash demos/record.sh             # Record all demos
-bash demos/record.sh core        # Record one specific demo
-bash demos/record.sh --list      # List available demos
-bash demos/record.sh --convert   # Convert .cast files to SVG
+./clifx convert yourfile.gif -w 40 -ht 20 -o yourname
 ```
-
-Requires `asciinema` and `svg-term-cli` (`npm install -g svg-term-cli`).
 
 ## Requirements
 
 - Bash 4+
 - A terminal with 256-color support
+- Python 3 + Pillow (only for `convert` command)
 - That's it
 
 ## License
 
-MIT — Luke Steuber
+MIT — [Luke Steuber](https://lukesteuber.com)

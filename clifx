@@ -52,7 +52,10 @@ _discover_animations() {
                 cur_h=0
             else
                 cur_h=$((cur_h + 1))
-                (( ${#_line} > max_w )) && max_w=${#_line}
+                local _measured="$_line"
+                # Strip ANSI escapes before measuring width
+                [[ "$_measured" == *$'\033['* ]] && _measured=$(printf '%s' "$_measured" | sed 's/\x1b\[[0-9;]*m//g')
+                (( ${#_measured} > max_w )) && max_w=${#_measured}
             fi
         done < "$f"
         (( cur_h > max_h )) && max_h=$cur_h
@@ -240,11 +243,11 @@ cmd_list() {
     printf "\n  ${BOLD}Animations${RESET}\n"
     printf "  ${UI_DIM}── compact ──${RESET}\n"
     for i in "${!ANIM_NAMES[@]}"; do
-        [[ "${ANIM_NAMES[$i]}" == mini-* ]] && printf "    %-18s %s\n" "${ANIM_NAMES[$i]}" "${ANIM_INFO[$i]}"
+        [[ "${ANIM_NAMES[$i]}" == mini-* || "${ANIM_NAMES[$i]}" == term-* ]] && printf "    %-18s %s\n" "${ANIM_NAMES[$i]}" "${ANIM_INFO[$i]}"
     done
     printf "  ${UI_DIM}── full-size ──${RESET}\n"
     for i in "${!ANIM_NAMES[@]}"; do
-        [[ "${ANIM_NAMES[$i]}" != mini-* ]] && printf "    %-18s %s\n" "${ANIM_NAMES[$i]}" "${ANIM_INFO[$i]}"
+        [[ "${ANIM_NAMES[$i]}" != mini-* && "${ANIM_NAMES[$i]}" != term-* ]] && printf "    %-18s %s\n" "${ANIM_NAMES[$i]}" "${ANIM_INFO[$i]}"
     done
     printf "\n"
 }
@@ -372,7 +375,7 @@ menu_animations() {
         local i=1 has_mini=0 has_full=0
         # First pass: check what we have
         for idx in "${!ANIM_NAMES[@]}"; do
-            if [[ "${ANIM_NAMES[$idx]}" == mini-* ]]; then
+            if [[ "${ANIM_NAMES[$idx]}" == mini-* || "${ANIM_NAMES[$idx]}" == term-* ]]; then
                 has_mini=1
             else
                 has_full=1
@@ -382,7 +385,7 @@ menu_animations() {
         if [[ $has_mini -eq 1 ]]; then
             printf "  ${UI_DIM}── compact (terminal-friendly) ──${RESET}\n"
             for idx in "${!ANIM_NAMES[@]}"; do
-                [[ "${ANIM_NAMES[$idx]}" != mini-* ]] && continue
+                [[ "${ANIM_NAMES[$idx]}" != mini-* && "${ANIM_NAMES[$idx]}" != term-* ]] && continue
                 printf "  ${BOLD}%2d${RESET}) %-18s ${UI_DIM}%s${RESET}\n" "$i" "${ANIM_NAMES[$idx]}" "${ANIM_INFO[$idx]}"
                 i=$((i + 1))
             done
@@ -391,7 +394,7 @@ menu_animations() {
         if [[ $has_full -eq 1 ]]; then
             printf "  ${UI_DIM}── full-size (large terminals) ──${RESET}\n"
             for idx in "${!ANIM_NAMES[@]}"; do
-                [[ "${ANIM_NAMES[$idx]}" == mini-* ]] && continue
+                [[ "${ANIM_NAMES[$idx]}" == mini-* || "${ANIM_NAMES[$idx]}" == term-* ]] && continue
                 printf "  ${BOLD}%2d${RESET}) %-18s ${UI_DIM}%s${RESET}\n" "$i" "${ANIM_NAMES[$idx]}" "${ANIM_INFO[$idx]}"
                 i=$((i + 1))
             done
@@ -573,10 +576,10 @@ tui_run() {
             # Build display-order list (mini first, then full)
             local -a _anim_order=()
             for _ai in "${!ANIM_NAMES[@]}"; do
-                [[ "${ANIM_NAMES[$_ai]}" == mini-* ]] && _anim_order+=("$_ai")
+                [[ "${ANIM_NAMES[$_ai]}" == mini-* || "${ANIM_NAMES[$_ai]}" == term-* ]] && _anim_order+=("$_ai")
             done
             for _ai in "${!ANIM_NAMES[@]}"; do
-                [[ "${ANIM_NAMES[$_ai]}" != mini-* ]] && _anim_order+=("$_ai")
+                [[ "${ANIM_NAMES[$_ai]}" != mini-* && "${ANIM_NAMES[$_ai]}" != term-* ]] && _anim_order+=("$_ai")
             done
 
             menu_animations

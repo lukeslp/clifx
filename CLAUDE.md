@@ -1,4 +1,7 @@
 # CLAUDE.md
+<!-- Navigation: ~/projects/clifx/CLAUDE.md -->
+<!-- Parent: ~/projects/CLAUDE.md -->
+<!-- Map: ~/CLAUDE_MAP.md -->
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -105,6 +108,9 @@ scripts/manifest.sh          ← effect dispatcher (sources all manifest_*.sh mo
 scripts/voice.sh     ← text voice renderer (whisper, speak, shout, corrupt, fragment, clear)
 scripts/play.sh      ← standalone frame animation player (wraps play_frames with trap/cleanup)
 scripts/tester.sh    ← legacy interactive tester (superseded by ./clifx)
+│
+tools/gif2term.py    ← GIF/video to terminal converter (Python 3 + Pillow)
+tools/gen_small_anims.py ← generator for procedural compact animations
 ```
 
 ### How to Source the Library

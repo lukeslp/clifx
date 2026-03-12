@@ -97,9 +97,16 @@ assemble_fragments() {
     render_art "$combined" "$color"
 }
 
+# --- Strip ANSI escape sequences for measurement ---
+_strip_ansi() {
+    printf '%s' "$1" | sed 's/\x1b\[[0-9;]*m//g'
+}
+
 # --- Crop a frame to fit terminal viewport ---
 # Centers content and clips to viewport dimensions.
 # Viewport = min(TERM_ROWS, CLIFX_MAX_HEIGHT) x min(TERM_COLS, CLIFX_MAX_WIDTH)
+# For frames with ANSI color codes (e.g. from gif2term), only vertical
+# cropping is applied — horizontal cropping would break escape sequences.
 # Usage: _crop_frame "frame_text"
 # Output: cropped text via stdout
 _crop_frame() {
@@ -110,9 +117,19 @@ _crop_frame() {
     done <<< "$frame"
 
     local frame_h=${#lines[@]}
+
+    # Detect ANSI content — if present, measure visible width only
+    local has_ansi=0
     local max_w=0
     for line in "${lines[@]}"; do
-        local len=${#line}
+        if [[ "$line" == *$'\033['* ]]; then
+            has_ansi=1
+            local stripped
+            stripped=$(_strip_ansi "$line")
+            local len=${#stripped}
+        else
+            local len=${#line}
+        fi
         (( len > max_w )) && max_w=$len
     done
 
@@ -134,25 +151,31 @@ _crop_frame() {
         y_count=$avail_rows
     fi
 
-    # Compute horizontal crop offset (center if wider than viewport)
-    local x_start=0
-    if (( max_w > vp_cols )); then
-        x_start=$(( (max_w - vp_cols) / 2 ))
-    fi
-
-    # Compute left padding to center narrow frames in terminal
-    local pad=0
-    if (( max_w < TERM_COLS )); then
-        pad=$(( (TERM_COLS - max_w) / 2 ))
+    # Horizontal cropping — only for plain text (ANSI content can't be substring'd safely)
+    local x_start=0 pad=0
+    if (( has_ansi == 0 )); then
+        if (( max_w > vp_cols )); then
+            x_start=$(( (max_w - vp_cols) / 2 ))
+        fi
+        if (( max_w < TERM_COLS )); then
+            pad=$(( (TERM_COLS - max_w) / 2 ))
+        fi
+    else
+        # Center ANSI frames with padding if narrower than terminal
+        if (( max_w < TERM_COLS )); then
+            pad=$(( (TERM_COLS - max_w) / 2 ))
+        fi
     fi
 
     local output=""
     for (( i=y_start; i < y_start + y_count && i < frame_h; i++ )); do
         local line="${lines[$i]}"
-        if (( x_start > 0 )); then
-            line="${line:$x_start:$vp_cols}"
-        elif (( ${#line} > vp_cols )); then
-            line="${line:0:$vp_cols}"
+        if (( has_ansi == 0 )); then
+            if (( x_start > 0 )); then
+                line="${line:$x_start:$vp_cols}"
+            elif (( ${#line} > vp_cols )); then
+                line="${line:0:$vp_cols}"
+            fi
         fi
         if (( pad > 0 )); then
             [[ -n "$output" ]] && output+=$'\n'
