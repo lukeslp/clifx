@@ -22,7 +22,7 @@ COLS=$TERM_COLS
 voice_whisper() {
     local text="${1,,}"  # force lowercase
     echo ""
-    printf "  ${THEME_DIM}"
+    printf "  ${THEME_COOL_DIM}"
     for ((i=0; i<${#text}; i++)); do
         printf "%s" "${text:$i:1}"
         sleep_ms $((40 + RANDOM % 60))

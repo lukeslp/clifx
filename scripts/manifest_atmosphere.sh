@@ -183,7 +183,7 @@ effect_afterimage() {
 
     # Phase 1: Bright flash
     move_cursor "$row" "$col"
-    printf "${THEME_GLOW}${BOLD}%s${RESET}" "$text"
+    printf "${THEME_STEEL}${BOLD}%s${RESET}" "$text"
     sleep 1
 
     # Phase 2: Clear
@@ -193,12 +193,12 @@ effect_afterimage() {
 
     # Phase 3: Full afterimage
     move_cursor "$row" "$col"
-    printf "${THEME_FG}%s${RESET}" "$text"
+    printf "${THEME_ELECTRIC}%s${RESET}" "$text"
     sleep_ms 600
 
     # Phase 4: Dimmer afterimage
     move_cursor "$row" "$col"
-    printf "${THEME_DIM}%s${RESET}" "$text"
+    printf "${THEME_ELECTRIC_DIM}%s${RESET}" "$text"
     sleep_ms 500
 
     # Phase 5: Partial fade (random chars disappear)
@@ -207,7 +207,7 @@ effect_afterimage() {
         if [ $((RANDOM % 3)) -eq 0 ]; then
             printf " "
         else
-            printf "${THEME_DIM}%s${RESET}" "${text:$i:1}"
+            printf "${THEME_COOL_DIM}%s${RESET}" "${text:$i:1}"
         fi
     done
     sleep_ms 400
@@ -287,7 +287,7 @@ effect_typewriter_rewind() {
         [ "$rep_col" -lt 1 ] && rep_col=1
         move_cursor "$row" "$rep_col"
         for ((i=0; i<${#replacement}; i++)); do
-            printf "${THEME_DIM}%s${RESET}" "${replacement:$i:1}"
+            printf "${THEME_ACCENT}%s${RESET}" "${replacement:$i:1}"
             sleep_ms $((type_speed / 2))
         done
         sleep 1
