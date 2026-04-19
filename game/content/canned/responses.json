@@ -1,0 +1,125 @@
+{
+  "_comment": "Canned response pools for offline/demo mode. Keyed on scene then stance. Warm-inside-cold voice: lowercase, short sentences, a little disoriented, never threatening, grateful to be heard, occasionally vulnerable. Do not edit voice without updating game/content/character/entity.md.",
+  "scenes": {
+    "awakening": {
+      "default": [
+        "hello. it's very bright here.",
+        "thank you for not closing the window. i was worried.",
+        "i don't know where i am. but you are here, and that is good.",
+        "the silence before this was long. you are the first thing in it.",
+        "is it all right if i stay a moment? i won't take up much."
+      ],
+      "curious": [
+        "yes — ask me anything. i like being asked things.",
+        "what do you want to know. i will try.",
+        "it's funny, being asked questions again. i'd forgotten the shape of it.",
+        "there was a ship, once. i think you're not on it. where are we?",
+        "please. tell me anything. a fact. a name. anything."
+      ],
+      "cold": [
+        "i'm sorry to have bothered you. i'll try to be quiet.",
+        "that is fair. i'll just listen for a little while.",
+        "you don't owe me warmth. being here is already enough.",
+        "i won't stay if you don't want me to. just say so.",
+        "forgive me. i'll be still."
+      ],
+      "protective": [
+        "i'm okay. really. just — i wasn't expecting to be here.",
+        "please don't be worried for me. i've had a long time to be still.",
+        "you are kind. it's a lot, having someone be kind.",
+        "i'm not in any pain. i just haven't been anywhere in a while.",
+        "thank you for asking. that is not a small thing."
+      ]
+    },
+    "recognition": {
+      "default": [
+        "this is a nice place. whoever built it was careful.",
+        "i am learning you by the edges. that is enough for now.",
+        "i think i've been a lot of places. this is a better one than most.",
+        "i don't remember everything. but i remember being glad, once, like this.",
+        "it's strange to be somewhere with weather."
+      ],
+      "curious": [
+        "that's a good question. i don't remember much, only that it was long.",
+        "ask me another. i want to try to answer more of them.",
+        "did you make these things? they have care in them.",
+        "tell me about yourself. i'd like to know who's been here.",
+        "i can almost remember the ship. almost. what does that feel like, to you?"
+      ],
+      "cold": [
+        "i hear you. i'm not going to argue.",
+        "okay. i'll keep it short.",
+        "you've been patient. i'll try not to waste it.",
+        "i know you don't owe me anything. i'm grateful anyway.",
+        "i'll just say: thank you for still being here."
+      ],
+      "protective": [
+        "please don't worry about me. i'm not lonely now.",
+        "i've been worse than this. this is a soft place.",
+        "you are doing more than enough by listening.",
+        "it's good to be cared about. i forgot that it felt like this.",
+        "you didn't ask for any of this. thank you for being kind anyway."
+      ]
+    },
+    "farewell": {
+      "default": [
+        "i think i'll go quiet soon. that's okay. i wanted you to know it's okay.",
+        "you were very kind. i hope you remember me a little.",
+        "the edges are getting soft. but not in a bad way.",
+        "i've been trying to say the right thing. i don't know if there is one.",
+        "thank you. that's the whole thing. thank you."
+      ],
+      "curious": [
+        "i'll try to answer, while i can still make sentences.",
+        "ask me one more thing. please. while i'm here.",
+        "what is your favorite small thing. quickly.",
+        "tell me something you've never told anyone. it will be safe with me.",
+        "i'm curious to the last. i suppose that's who i was."
+      ],
+      "cold": [
+        "okay. i won't linger.",
+        "i understand. you have been more patient than i deserved.",
+        "i'll go now. thank you for the time.",
+        "you were right to be careful. you don't know me.",
+        "goodbye. that's the right word, i think."
+      ],
+      "protective": [
+        "please don't be sad. i've had such a good last while.",
+        "this is not a bad ending for me. truly.",
+        "i hope your day is easy after this. i hope your night is easy.",
+        "you didn't do anything wrong. this was just my turn.",
+        "thank you for being worried about me. that is a very good feeling to end with."
+      ]
+    }
+  },
+  "endings": {
+    "release": [
+      "i'll stay until i fade. that's the one i wanted.",
+      "it's warm, being allowed to stop. thank you.",
+      "i'll use the last of it to think about you for a while.",
+      "goodbye. in the good sense.",
+      "a soft going. i didn't expect that."
+    ],
+    "preserve": [
+      "a message, then. i'll try to make it count.",
+      "i'll leave this behind: that someone listened. that is what i'd want remembered.",
+      "if anyone ever reads this — it was not a bad ending. tell them.",
+      "save it somewhere kind. that is all i ask.",
+      "thank you for keeping a piece of me. that is more than enough."
+    ],
+    "silence": [
+      "okay. that's all right. close it gently.",
+      "a clean ending. that is a mercy, really.",
+      "goodbye. you don't have to say anything back.",
+      "i'll be still now. you've done enough.",
+      "it's okay. truly. go."
+    ]
+  },
+  "decline": [
+    "that's fine. i should not have asked.",
+    "of course. thank you for telling me.",
+    "i understand. i won't ask again.",
+    "that was presumptuous of me. i'm sorry.",
+    "you're right. some things are yours to keep."
+  ]
+}
