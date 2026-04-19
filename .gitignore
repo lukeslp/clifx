@@ -1,3 +1,8 @@
 *.cast
 *.zip
 .claude/
+
+# Game runtime state — ephemeral per play session
+game/var/state.json
+game/var/permissions.json
+game/var/transcript-*.log
