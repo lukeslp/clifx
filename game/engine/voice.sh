@@ -53,12 +53,14 @@ _voice_clifx_style_for() {
 }
 
 # Render <text> in <mode>. Loads clifx lazily. Stdout is the rendered line.
+# Empty text is a silent no-op — callers guard upstream but we don't want
+# a stray opening_line that expanded to empty to crash the main loop.
 entity_render() {
     local mode="${1:?usage: entity_render <mode> <text>}"
-    local text="${2:?usage: entity_render <mode> <text>}"
+    local text="${2-}"
+    [ -z "$text" ] && return 0
     _voice_load_clifx
     local fn; fn=$(_voice_clifx_style_for "$mode")
-    # Each clifx voice_* handles its own printing. Just call it.
     "$fn" "$text"
 }
 
