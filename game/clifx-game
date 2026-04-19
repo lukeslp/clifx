@@ -55,20 +55,10 @@ cold_open() {
 }
 
 # -----------------------------------------------------------------------------
-# Stance heuristic (Phase 7 will replace with LLM classifier)
+# Stance classifier — delegates to engine/parser.sh (LLM w/ keyword fallback)
 # -----------------------------------------------------------------------------
 classify_stance() {
-    local text="${1,,}"  # lowercase
-    case "$text" in
-        *"fuck"*|*"shut up"*|*"go away"*|*"who cares"*|*"leave me"*|*"stop"*)
-            echo "cold" ;;
-        *"how are you"*|*"are you okay"*|*"please"*|*"careful"*|*"safe"*|*"worry"*)
-            echo "protective" ;;
-        *"who"*|*"what"*|*"why"*|*"tell me"*|*"do you"*|*"remember"*|\?*|*\?)
-            echo "curious" ;;
-        *)
-            echo "neutral" ;;
-    esac
+    bash "$ENGINE/parser.sh" stance "$1"
 }
 
 # -----------------------------------------------------------------------------
