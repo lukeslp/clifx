@@ -15,16 +15,21 @@ set -euo pipefail
 _LLM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _LLM_PROVIDERS_DIR="$_LLM_DIR/providers"
 
-# Auto-detect provider priority: ollama if reachable → dreamer if key set → canned.
+# Auto-detect provider priority: ollama if reachable → dreamer if any cloud
+# key is set → canned. Respects OLLAMA_URL override (a port known to be
+# closed, like http://127.0.0.1:1, forces the fallthrough for testing).
 _llm_detect_provider() {
     if curl -s --max-time 2 "${OLLAMA_URL:-http://localhost:11434}/api/tags" \
             >/dev/null 2>&1; then
         echo "ollama"
-    elif [ -n "${DREAMER_API_KEY:-}" ]; then
-        echo "dreamer"
-    else
-        echo "canned"
+        return
     fi
+    # Dreamer is reachable if any supported cloud provider key is configured.
+    if [ -n "${DREAMER_API_KEY:-}${ANTHROPIC_API_KEY:-}${OPENAI_API_KEY:-}${XAI_API_KEY:-}${MISTRAL_API_KEY:-}${GEMINI_API_KEY:-}${GOOGLE_API_KEY:-}" ]; then
+        echo "dreamer"
+        return
+    fi
+    echo "canned"
 }
 
 _llm_resolve_provider() {
