@@ -1,7 +1,4 @@
 # CLAUDE.md
-<!-- Navigation: ~/projects/clifx/CLAUDE.md -->
-<!-- Parent: ~/projects/CLAUDE.md -->
-<!-- Map: ~/CLAUDE_MAP.md -->
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -31,11 +28,27 @@ No build step. No dependencies beyond Bash 4+ and a terminal that supports 256-c
 # List all effects, voices, and animations
 ./clifx list
 
+# Interactive widgets (counter, cursor, paint)
+./clifx interactive counter
+
 # Lower-level scripts (still work, used internally by ./clifx)
 bash scripts/manifest.sh <effect_name> [args...]
 bash scripts/voice.sh "message" [whisper|speak|shout|corrupt|fragment|clear]
 bash scripts/play.sh ascii-animations/spiral.txt 12
+bash scripts/interactive.sh paint "░"
 ```
+
+## Testing
+
+Bats test suite in `tests/`. Requires `bats-core` (`apt install bats` or `npm i -g bats`).
+
+```bash
+bats tests/                          # run all suites
+bats tests/test_ascii.bats           # single suite
+bats -f "strip_ansi" tests/          # filter by test name pattern
+```
+
+`tests/helpers/setup.bash` sources `lib/core.sh` with a headless `TERM=xterm-256color`, `COLUMNS=80`, `LINES=24`, and pins `CLIFX_SPEED_MULT=1` so effects never actually sleep. New test files should `load "helpers/setup"` first.
 
 ## Speed Control
 
@@ -99,19 +112,37 @@ theme/default.sh     ← default color palette + frame characters (overridable v
 │
 ascii-animations/    ← frame-delimited animation files (.txt) — spiral, gears, cube, bauhaus, ironman
 │
-scripts/manifest.sh          ← effect dispatcher (sources all manifest_*.sh modules)
+scripts/manifest.sh          ← effect dispatcher (auto-sources every scripts/manifest_*.sh on startup)
 ├── scripts/manifest_corruption.sh ← screen_tear, scanlines, chromatic_aberration, signal_noise, datamosh
 ├── scripts/manifest_spatial.sh    ← rain, spiral, ripple, orbit
 ├── scripts/manifest_theater.sh    ← hex_dump, waveform, process_tree
 ├── scripts/manifest_atmosphere.sh ← vignette, plasma, breathe, afterimage, typewriter_rewind
+├── scripts/manifest_data.sh       ← cpu_sparkline, mem_bars, disk_bars, net_monitor, proc_heatmap, sysinfo_panel (⚠ not yet dispatched)
+├── scripts/manifest_physics.sh    ← particles, gravity_text, explosion, fountain, shockwave (⚠ not yet dispatched)
+└── scripts/manifest_hybrid.sh     ← plasma_hd, rain_hd — Python-accelerated via tools/effects/*.py, fall back to Bash (⚠ not yet dispatched)
 │
-scripts/voice.sh     ← text voice renderer (whisper, speak, shout, corrupt, fragment, clear)
-scripts/play.sh      ← standalone frame animation player (wraps play_frames with trap/cleanup)
-scripts/tester.sh    ← legacy interactive tester (superseded by ./clifx)
+scripts/voice.sh         ← text voice renderer (whisper, speak, shout, corrupt, fragment, clear)
+scripts/play.sh          ← standalone frame animation player (wraps play_frames with trap/cleanup)
+scripts/interactive.sh   ← iloop_* widget launcher (counter, cursor, paint) — wired to `./clifx interactive`
+scripts/tester.sh        ← legacy interactive tester (superseded by ./clifx)
 │
-tools/gif2term.py    ← GIF/video to terminal converter (Python 3 + Pillow)
+tools/gif2term.py        ← GIF/video to terminal converter (Python 3 + Pillow)
 tools/gen_small_anims.py ← generator for procedural compact animations
+tools/effects/           ← Python helpers used by manifest_hybrid.sh (plasma.py, rain.py)
+│
+tests/                   ← Bats suite; load helpers/setup.bash for headless TERM + CLIFX_SPEED_MULT=1
+demos/record.sh          ← script that renders SVG demo reels (demos/*.svg) via terminal-to-svg capture
 ```
+
+### ⚠ Unwired Effect Modules
+
+`manifest_data.sh`, `manifest_physics.sh`, and `manifest_hybrid.sh` are auto-sourced by the `for _ef in manifest_*.sh` loop, so their `effect_*` functions are **defined** but there is no `case` entry in `scripts/manifest.sh` and no `EFFECTS_*` array in `clifx` referencing them. To expose one of these effects end-to-end you must:
+
+1. Add a `case` arm in `scripts/manifest.sh` mapping the effect name to its function
+2. Add the name to an `EFFECTS_*` array in `clifx` (or create a new category array and append to `ALL_EFFECTS`)
+3. Add a `run_effect()` case arm in `clifx`
+
+Calling `./clifx particles` today falls through to the "unknown effect" branch even though `effect_particles` exists.
 
 ### How to Source the Library
 

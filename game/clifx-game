@@ -1,0 +1,329 @@
+#!/usr/bin/env bash
+# ============================================================================
+# game/clifx-game — clifx narrative game, Loop 1
+# Invoked by `./clifx game` (see top-level clifx CLI) or standalone.
+# Cold open, main play loop, endings. Sources the engine modules.
+# ============================================================================
+
+set -uo pipefail
+
+CLIFX_ROOT="${CLIFX_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+GAME_DIR="$CLIFX_ROOT/game"
+ENGINE="$GAME_DIR/engine"
+CONTENT="$GAME_DIR/content"
+VAR_DIR="$GAME_DIR/var"
+
+export CLIFX_ROOT CLIFX_GAME_DIR="$GAME_DIR"
+export CLIFX_GAME_STATE_FILE="$VAR_DIR/state.json"
+export CLIFX_GAME_PERMS_FILE="$VAR_DIR/permissions.json"
+export CLIFX_GAME_STATE_SH="$ENGINE/state.sh"
+export CLIFX_GAME_KEYSTONES="$CONTENT/keystones"
+export CLIFX_GAME_CANNED="$CONTENT/canned/responses.json"
+
+# Source engine modules
+# shellcheck disable=SC1091
+source "$ENGINE/voice.sh"
+# enrich / scene / state / permissions / llm all have CLIs; we shell out for
+# state/scene/enrich/permissions but source llm's dispatcher for in-process
+# provider calls.
+
+mkdir -p "$VAR_DIR"
+
+# -----------------------------------------------------------------------------
+# Cold open
+# Skips entirely when CLIFX_GAME_NO_COLD_OPEN=1 (smoke tests + --replay).
+# -----------------------------------------------------------------------------
+cold_open() {
+    [ -n "${CLIFX_GAME_NO_COLD_OPEN:-}" ] && return 0
+    clear
+    echo ""
+    echo "  ┌────────────────────────────┐"
+    echo "  │   clifx-game — loop 1      │"
+    echo "  │   initializing...          │"
+    echo "  └────────────────────────────┘"
+    echo ""
+    sleep 0.4
+    printf "  [ ] load theme"; sleep 0.4; printf "\r  [✓] load theme\n"
+    printf "  [ ] init effects"; sleep 0.4; printf "\r  [✓] init effects\n"
+    printf "  [ ] open scene"; sleep 0.6
+
+    # Interrupt with a corruption burst. Redirect to stderr so piped
+    # output doesn't include escape codes for replay / transcript.
+    (bash "$CLIFX_ROOT/scripts/manifest.sh" chromatic_aberration "SIGNAL DETECTED" 1 2>/dev/null) || true
+    echo ""
+    sleep 0.3
+}
+
+# -----------------------------------------------------------------------------
+# Stance classifier — delegates to engine/parser.sh (LLM w/ keyword fallback)
+# -----------------------------------------------------------------------------
+classify_stance() {
+    bash "$ENGINE/parser.sh" stance "$1"
+}
+
+# -----------------------------------------------------------------------------
+# In-farewell choice detection
+# -----------------------------------------------------------------------------
+detect_choice() {
+    local text="${1,,}"
+    case "$text" in
+        *release*|*let\ you\ fade*|*keep\ running*) echo "release" ;;
+        *preserve*|*save*|*remember*|*message*)    echo "preserve" ;;
+        *silence*|*close*|*goodbye*|*bye*|*end\ it*) echo "silence" ;;
+        *) echo "" ;;
+    esac
+}
+
+# -----------------------------------------------------------------------------
+# LLM call wrapper (uses configured provider)
+# -----------------------------------------------------------------------------
+llm_response() {
+    local system_prompt="$1"
+    local transcript_json="$2"
+    local user_message="$3"
+    bash "$ENGINE/llm.sh" chat "$system_prompt" "$transcript_json" "$user_message"
+}
+
+# Build messages array from state.transcript, mapping {who,line} → {role,content}
+build_messages() {
+    bash "$ENGINE/state.sh" get 'transcript' \
+        | jq -c '[.[] | {
+            role: (if .who == "entity" then "assistant" else "user" end),
+            content: .line
+        }]'
+}
+
+# Read the scene-specific system prompt (header + character guide)
+build_system_prompt() {
+    local scene_id="$1"
+    local char_guide scene_prompt
+    char_guide=$(cat "$CONTENT/character/entity.md")
+    scene_prompt=$(bash "$ENGINE/scene.sh" section "$scene_id" system_prompt)
+    printf '%s\n\n## scene-specific instructions\n\n%s\n' \
+        "$char_guide" "$scene_prompt"
+}
+
+# -----------------------------------------------------------------------------
+# Enrichment handler — parse an LLM response, consent if there's a request
+# -----------------------------------------------------------------------------
+handle_enrichment() {
+    local raw_response="$1"
+    local enrich_json
+    enrich_json=$(bash "$ENGINE/enrich.sh" parse "$raw_response" 2>/dev/null) || return 0
+
+    local ask reason
+    ask=$(echo "$enrich_json" | jq -r '.ask')
+    reason=$(echo "$enrich_json" | jq -r '.reason')
+
+    # Check scene's allowed_enrichment list
+    local current_scene allowed
+    current_scene=$(bash "$ENGINE/state.sh" get scene)
+    allowed=$(bash "$ENGINE/scene.sh" field "$current_scene" allowed_enrichment)
+    if ! printf ' %s ' "$allowed" | grep -q " $ask "; then
+        # Not permitted in this scene — silently drop
+        return 0
+    fi
+
+    bash "$ENGINE/permissions.sh" request "$ask" "$reason" 2>/dev/null || true
+}
+
+# -----------------------------------------------------------------------------
+# Render an ending keystone's authored final_lines sequence
+# -----------------------------------------------------------------------------
+render_ending() {
+    local id="$1"
+    # Apply state mutations
+    bash "$ENGINE/scene.sh" apply "$id" >/dev/null
+
+    # Opening line if present
+    local opening
+    opening=$(bash "$ENGINE/scene.sh" opening "$id" 2>/dev/null) || true
+    if [ -n "$opening" ]; then
+        entity_speak "$opening"
+        sleep 1.2
+    fi
+
+    # Each non-empty, non-comment line of final_lines section is rendered
+    local lines
+    lines=$(bash "$ENGINE/scene.sh" section "$id" final_lines)
+    while IFS= read -r line; do
+        line="${line#"${line%%[![:space:]]*}"}"
+        [ -z "$line" ] && continue
+        entity_speak "$line"
+        sleep 1.4
+    done <<< "$lines"
+
+    # If this is preserve, write the final message to a file (with consent)
+    if [ "$id" = "ending-preserve" ]; then
+        local msg
+        msg=$(bash "$ENGINE/scene.sh" section "$id" preserved_message \
+            | sed "s/{timestamp}/$(date -u +%Y-%m-%dT%H:%M:%SZ)/")
+        echo ""
+        echo "  ---- preserve the message? ----"
+        echo "  the entity would like to save:"
+        echo "  ---"
+        printf '%s' "$msg" | sed 's/^/  | /'
+        echo ""
+        echo "  ---"
+        echo "  save to ~/clifx-game-last-message.txt? (y/n)"
+        local reply
+        if [ -n "${CLIFX_GAME_PERMS_ANSWER:-}" ]; then
+            reply="$CLIFX_GAME_PERMS_ANSWER"
+        else
+            read -r -p "  > " reply || reply=""
+        fi
+        case "${reply,,}" in
+            y|yes)
+                printf '%s\n' "$msg" > "$HOME/clifx-game-last-message.txt"
+                echo ""
+                echo "  (saved to ~/clifx-game-last-message.txt)"
+                ;;
+            *)
+                echo ""
+                echo "  (not saved)"
+                ;;
+        esac
+    fi
+
+    echo ""
+    echo ""
+}
+
+# -----------------------------------------------------------------------------
+# Main play loop
+# -----------------------------------------------------------------------------
+play() {
+    cold_open
+
+    # Clean slate
+    bash "$ENGINE/state.sh" init >/dev/null
+    bash "$ENGINE/permissions.sh" init >/dev/null
+
+    # Apply opening keystone mutations, render opening line
+    local current="awakening"
+    bash "$ENGINE/scene.sh" apply "$current" >/dev/null
+
+    local opening
+    opening=$(bash "$ENGINE/scene.sh" opening "$current" 2>/dev/null) || opening=""
+    if [ -n "$opening" ]; then
+        entity_speak "$opening"
+        bash "$ENGINE/state.sh" log entity "${opening#\[\[*\]\] }" >/dev/null
+    fi
+
+    local max_turns="${CLIFX_GAME_MAX_TURNS:-20}"
+    local turn=0
+
+    while [ "$turn" -lt "$max_turns" ]; do
+        turn=$((turn + 1))
+
+        # Read player input
+        echo ""
+        local user_input
+        if [ -n "${CLIFX_GAME_SCRIPT_INPUT:-}" ]; then
+            # Scripted input via env (for testing): lines separated by \n
+            user_input=$(echo -e "$CLIFX_GAME_SCRIPT_INPUT" | sed -n "${turn}p")
+        else
+            read -r -p "> " user_input || break
+        fi
+        [ -z "$user_input" ] && user_input="..."
+
+        bash "$ENGINE/state.sh" set player.last_input "$(printf '%s' "$user_input" | jq -Rs .)" >/dev/null
+        bash "$ENGINE/state.sh" log player "$user_input" >/dev/null
+        bash "$ENGINE/state.sh" inc player.message_count >/dev/null
+
+        # Classify stance (heuristic v1)
+        local stance
+        stance=$(classify_stance "$user_input")
+        bash "$ENGINE/state.sh" set player.stance "\"$stance\"" >/dev/null
+
+        # In farewell scene, detect final choice
+        if [ "$current" = "farewell" ]; then
+            local choice; choice=$(detect_choice "$user_input")
+            if [ -n "$choice" ]; then
+                bash "$ENGINE/state.sh" set player.final_choice "\"$choice\"" >/dev/null
+            fi
+        fi
+
+        # Check scene exits
+        local next
+        next=$(bash "$ENGINE/scene.sh" check_exits "$current" 2>/dev/null) || next=""
+
+        if [ -n "$next" ]; then
+            current="$next"
+            if [[ "$current" == ending-* ]]; then
+                render_ending "$current"
+                break
+            else
+                bash "$ENGINE/scene.sh" apply "$current" >/dev/null
+            fi
+        fi
+
+        # Build LLM call inputs
+        local sys; sys=$(build_system_prompt "$current")
+        local msgs; msgs=$(build_messages)
+
+        # Call LLM (or canned provider) — capture full response
+        local response
+        response=$(llm_response "$sys" "$msgs" "$user_input" 2>/dev/null) || response=""
+
+        if [ -z "$response" ]; then
+            # Fallback to a canned line for this scene
+            response=$(bash "$ENGINE/llm.sh" chat "$sys" "$msgs" "$user_input" 2>/dev/null) || true
+            [ -z "$response" ] && response="..."
+        fi
+
+        # Handle any enrichment request in the response
+        handle_enrichment "$response" >/dev/null
+
+        # Strip the enrichment block for display
+        local clean
+        clean=$(bash "$ENGINE/enrich.sh" strip "$response")
+        [ -z "$clean" ] && clean="$response"
+
+        # Render the entity's line
+        entity_speak "$clean"
+        bash "$ENGINE/state.sh" log entity "$clean" >/dev/null
+    done
+
+    # Save transcript log
+    local ts; ts=$(date -u +%Y-%m-%dT%H-%M-%SZ)
+    bash "$ENGINE/state.sh" dump > "$VAR_DIR/transcript-$ts.log"
+}
+
+# -----------------------------------------------------------------------------
+# Entry
+# -----------------------------------------------------------------------------
+main() {
+    local cmd="${1:-play}"
+    case "$cmd" in
+        play)
+            play
+            ;;
+        replay)
+            local log="${2:?usage: clifx-game replay <transcript.log>}"
+            [ -f "$log" ] || { echo "no transcript: $log" >&2; exit 1; }
+            jq -r '.transcript[] | "\(.who): \(.line)"' "$log"
+            ;;
+        help|--help|-h)
+            cat <<HELP
+clifx-game — narrative game, Loop 1
+
+Usage:
+  clifx-game [play]              play the game
+  clifx-game replay <log>        print a saved transcript
+
+Env:
+  CLIFX_GAME_PROVIDER            ollama | dreamer | canned (auto-detected)
+  CLIFX_GAME_MODEL               LLM model name
+  CLIFX_GAME_MAX_TURNS           safety cap on turns (default 20)
+  CLIFX_GAME_SCRIPT_INPUT        newline-separated inputs (for testing)
+HELP
+            ;;
+        *)
+            echo "clifx-game: unknown command '$cmd' (try: play, replay, help)" >&2
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
